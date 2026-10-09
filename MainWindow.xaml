@@ -9,13 +9,14 @@
     mc:Ignorable="d"
     Title="Aster Player">
 
-    <Grid x:Name="RootGrid" Background="#0b0d12" Padding="20" AllowDrop="True"
+    <Grid x:Name="RootGrid" RequestedTheme="Light" Background="#f4f6fb" Padding="20" AllowDrop="True"
           DragOver="RootGrid_DragOver" DragEnter="RootGrid_DragEnter"
           DragLeave="RootGrid_DragLeave" Drop="RootGrid_Drop"
           KeyDown="RootGrid_KeyDown" IsTabStop="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -28,15 +29,15 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <Border Width="40" Height="40" CornerRadius="12" Background="#7758e8">
+                <Border Width="40" Height="40" CornerRadius="12" Background="#7054d8">
                     <SymbolIcon Symbol="Video" Foreground="White"
                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
                 <StackPanel Spacing="1">
                     <TextBlock Text="Aster Player" FontSize="19" FontWeight="SemiBold"
-                               Foreground="#f2f4fa" />
+                               Foreground="#172033" />
                     <TextBlock Text="Your library, ready to play" FontSize="12"
-                               Foreground="#8993a6" />
+                               Foreground="#68748a" />
                 </StackPanel>
             </StackPanel>
             <ScrollViewer Grid.Column="1" HorizontalScrollMode="Enabled"
@@ -44,6 +45,7 @@
                           VerticalScrollBarVisibility="Hidden" MaxWidth="520">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <AppBarToggleButton x:Name="CompactModeButton" Click="CompactMode_Click"
+                                        IsChecked="False"
                                         ToolTipService.ToolTip="Hide or show the play queue"
                                         AutomationProperties.Name="Toggle compact mode">
                         <AppBarToggleButton.Icon>
@@ -69,12 +71,12 @@
         </Grid>
 
         <Border Grid.Row="1" Grid.Column="0" Margin="0,0,18,18" CornerRadius="18"
-                Background="#050608" BorderBrush="#2a3140" BorderThickness="1">
+                Background="#e9edf5" BorderBrush="#d9dfeb" BorderThickness="1">
             <Grid>
                 <Grid.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#0d1118" Offset="0" />
-                        <GradientStop Color="#0b0d12" Offset="1" />
+                        <GradientStop Color="#f4f6fb" Offset="0" />
+                        <GradientStop Color="#e9edf5" Offset="1" />
                     </LinearGradientBrush>
                 </Grid.Background>
                 <MediaPlayerElement x:Name="VideoPlayer" AutoPlay="False" AreTransportControlsEnabled="False"
@@ -86,19 +88,19 @@
                             <EntranceThemeTransition />
                         </TransitionCollection>
                     </StackPanel.Transitions>
-                    <Border Width="90" Height="90" CornerRadius="45" Background="#171b26"
-                            HorizontalAlignment="Center" BorderBrush="#2b3350" BorderThickness="1">
-                        <SymbolIcon Symbol="Video" Foreground="#9b8afb"
+                    <Border Width="90" Height="90" CornerRadius="45" Background="#e8e4f8"
+                            HorizontalAlignment="Center" BorderBrush="#d8d0f2" BorderThickness="1">
+                        <SymbolIcon Symbol="Video" Foreground="#7054d8"
                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="Your next watch starts here" FontSize="24" FontWeight="SemiBold"
-                               Foreground="#f3f6ff" HorizontalAlignment="Center" TextAlignment="Center" />
+                               Foreground="#202a3e" HorizontalAlignment="Center" TextAlignment="Center" />
                     <TextBlock Text="Open a video, stream, or drag in a few files to build your queue"
-                               FontSize="13" Foreground="#a3adbf" HorizontalAlignment="Center"
+                               FontSize="13" Foreground="#657188" HorizontalAlignment="Center"
                                TextAlignment="Center" TextWrapping="WrapWholeWords" />
                 </StackPanel>
-                <Border x:Name="DropOverlay" Visibility="Collapsed" Background="#CC111827"
-                        BorderBrush="#9b8afb" BorderThickness="2" CornerRadius="18"
+                <Border x:Name="DropOverlay" Visibility="Collapsed" Background="#EAF0FB"
+                        BorderBrush="#8067df" BorderThickness="2" CornerRadius="18"
                         IsHitTestVisible="False">
                     <Border.Transitions>
                         <TransitionCollection>
@@ -106,19 +108,19 @@
                         </TransitionCollection>
                     </Border.Transitions>
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                        <SymbolIcon Symbol="Add" Foreground="#c4b8ff"
+                        <SymbolIcon Symbol="Add" Foreground="#7054d8"
                                     HorizontalAlignment="Center" />
                         <TextBlock Text="Drop media or subtitles"
-                                   Foreground="White" FontSize="18" FontWeight="SemiBold" />
+                                   Foreground="#202a3e" FontSize="18" FontWeight="SemiBold" />
                         <TextBlock Text="Media joins the queue · subtitles attach to the current item"
-                                   Foreground="#c8ceda" FontSize="12" />
+                                   Foreground="#657188" FontSize="12" />
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
 
         <Border x:Name="QueuePanel" Grid.Row="1" Grid.Column="1" Margin="0,0,0,18" Padding="18" CornerRadius="18"
-                Background="#121620" BorderBrush="#2a3140" BorderThickness="1">
+                Background="#ffffff" BorderBrush="#dfe4ee" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -131,9 +133,9 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Spacing="4">
                         <TextBlock Text="Play queue" FontSize="17" FontWeight="SemiBold"
-                                   Foreground="#f2f4fa" />
+                                   Foreground="#202a3e" />
                         <TextBlock x:Name="QueueCountText" Text="0 videos"
-                                   FontSize="12" Foreground="#8993a6" />
+                                   FontSize="12" Foreground="#68748a" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
                         <AppBarButton x:Name="RemoveQueueItemButton" Click="RemoveQueueItem_Click"
@@ -155,7 +157,7 @@
                 <Grid Grid.Row="1">
                     <ListView x:Name="PlaylistView" SelectionChanged="Playlist_SelectionChanged"
                               SelectionMode="Single" Background="Transparent" BorderThickness="0"
-                              Foreground="#e8edf7" Padding="0">
+                              Foreground="#202a3e" Padding="0">
                         <ListView.ItemContainerTransitions>
                             <TransitionCollection>
                                 <EntranceThemeTransition IsStaggeringEnabled="True" />
@@ -169,13 +171,13 @@
                                             <ColumnDefinition Width="28" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <Border Width="22" Height="22" CornerRadius="7" Background="#1b2230"
+                                        <Border Width="22" Height="22" CornerRadius="7" Background="#eef1f8"
                                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <SymbolIcon Symbol="Video" Foreground="#8ea6ff"
+                                            <SymbolIcon Symbol="Video" Foreground="#7054d8"
                                                         VerticalAlignment="Center" HorizontalAlignment="Center" />
                                         </Border>
                                         <TextBlock Grid.Column="1" Text="{Binding}" FontSize="13"
-                                                   Foreground="#edf2ff" VerticalAlignment="Center"
+                                                   Foreground="#202a3e" VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                                     </Grid>
                                 </DataTemplate>
@@ -188,19 +190,19 @@
                                 <EntranceThemeTransition />
                             </TransitionCollection>
                         </StackPanel.Transitions>
-                        <SymbolIcon Symbol="Play" Foreground="#687286"
+                        <SymbolIcon Symbol="Play" Foreground="#8792a6"
                                     HorizontalAlignment="Center" />
                         <TextBlock Text="Nothing in the queue yet" FontSize="13"
-                                   Foreground="#aeb7c8" HorizontalAlignment="Center" />
+                                   Foreground="#58657c" HorizontalAlignment="Center" />
                         <TextBlock Text="Add videos to build your watch list"
-                                   FontSize="11" Foreground="#778196" HorizontalAlignment="Center" />
+                                   FontSize="11" Foreground="#7a869b" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Grid>
             </Grid>
         </Border>
 
         <Border Grid.Row="2" Grid.ColumnSpan="2" Padding="20,16" CornerRadius="18"
-                Background="#121620" BorderBrush="#2a3140" BorderThickness="1">
+                Background="#ffffff" BorderBrush="#dfe4ee" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -213,13 +215,13 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="CurrentTimeText" Text="00:00" VerticalAlignment="Center"
-                               FontSize="12" FontFamily="Consolas" Foreground="#aeb7c8" />
+                               FontSize="12" FontFamily="Consolas" Foreground="#58657c" />
                     <Slider Grid.Column="1" x:Name="SeekSlider" Minimum="0" Maximum="1" Value="0"
                             ValueChanged="SeekSlider_ValueChanged" VerticalAlignment="Center"
                             IsEnabled="False" />
                     <TextBlock Grid.Column="2" x:Name="DurationText" Text="00:00"
                                VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
-                               Foreground="#aeb7c8" />
+                               Foreground="#58657c" />
                 </Grid>
 
                 <Grid Grid.Row="1" Margin="0,12,0,0" ColumnSpacing="16">
@@ -230,12 +232,12 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Spacing="4" VerticalAlignment="Center" MaxWidth="420">
                         <TextBlock Text="NOW PLAYING" FontSize="10" CharacterSpacing="100"
-                                   Foreground="#8993a6" />
+                                   Foreground="#68748a" />
                         <TextBlock x:Name="NowPlayingText" Text="Choose a video"
-                                   FontSize="13" FontWeight="SemiBold" Foreground="#e5e9f2"
+                                   FontSize="13" FontWeight="SemiBold" Foreground="#202a3e"
                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                         <TextBlock x:Name="StatusText" Text="Ready when you are"
-                                   FontSize="10" Foreground="#8993a6"
+                                   FontSize="10" Foreground="#68748a"
                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
                                    ToolTipService.ToolTip="Space: play/pause · arrows: seek/volume · M: mute · F: fullscreen" />
                     </StackPanel>
@@ -288,9 +290,9 @@
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
                                 HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Border Background="#181d2b" CornerRadius="10" Padding="4,2" BorderBrush="#2a3140" BorderThickness="1">
+                        <Border Background="#f3f5fa" CornerRadius="10" Padding="4,2" BorderBrush="#dfe4ee" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="Speed" FontSize="10" Foreground="#8b93a8" VerticalAlignment="Center" />
+                                <TextBlock Text="Speed" FontSize="10" Foreground="#68748a" VerticalAlignment="Center" />
                                 <ComboBox x:Name="SpeedPicker" Width="84" SelectedIndex="2"
                                           ToolTipService.ToolTip="Playback speed"
                                           AutomationProperties.Name="Playback speed"

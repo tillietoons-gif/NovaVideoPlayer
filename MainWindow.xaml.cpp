@@ -750,7 +750,9 @@ namespace winrt::App1::implementation
     {
         m_compactMode = this->CompactModeButton().IsChecked().Value();
         this->QueuePanel().Visibility(m_compactMode ? Visibility::Collapsed : Visibility::Visible);
-        this->QueueColumn().Width(GridLength{ m_compactMode ? 0.0 : 280.0 });
+        this->QueueColumn().Width(GridLength{
+            m_compactMode ? 0.0 : 280.0,
+            Microsoft::UI::Xaml::GridUnitType::Pixel });
         this->StatusText().Text(m_compactMode ? L"Compact theater mode" : L"Queue visible");
     }
 
