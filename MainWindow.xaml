@@ -9,8 +9,9 @@
     mc:Ignorable="d"
     Title="Aster Player">
 
-    <Grid x:Name="RootGrid" Background="#0b0d12" Padding="20">
+    <Grid x:Name="RootGrid" Background="#0b0d12" Padding="24">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -19,94 +20,165 @@
             <ColumnDefinition Width="300" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Row="0" Grid.Column="0" Margin="0,0,16,16" CornerRadius="12"
+        <Grid Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Border Width="40" Height="40" CornerRadius="12" Background="#7758e8">
+                    <FontIcon Glyph="&#xE768;" FontSize="19" Foreground="White"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Spacing="1">
+                    <TextBlock Text="Aster Player" FontSize="19" FontWeight="SemiBold"
+                               Foreground="#f2f4fa" />
+                    <TextBlock Text="Your library, ready to play" FontSize="12"
+                               Foreground="#8993a6" />
+                </StackPanel>
+            </StackPanel>
+            <Button Grid.Column="1" x:Name="OpenVideoButton" Click="OpenVideo_Click"
+                    Content="＋   Open video" Height="40" MinWidth="132"
+                    ToolTipService.ToolTip="Choose one or more video files" />
+        </Grid>
+
+        <Border Grid.Row="1" Grid.Column="0" Margin="0,0,18,18" CornerRadius="14"
                 Background="#050608" BorderBrush="#242a35" BorderThickness="1">
             <Grid>
                 <MediaPlayerElement x:Name="VideoPlayer" AutoPlay="False" AreTransportControlsEnabled="False"
                                     Stretch="Uniform" />
                 <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Spacing="8" IsHitTestVisible="False">
-                    <FontIcon Glyph="&#xE714;" FontSize="42" Foreground="#778196"
-                              HorizontalAlignment="Center" />
-                    <TextBlock Text="Open a video to start watching" FontSize="18"
-                               Foreground="#d9deea" HorizontalAlignment="Center" />
-                    <TextBlock Text="Your playlist and playback controls are right here"
-                               FontSize="13" Foreground="#778196" HorizontalAlignment="Center" />
+                            Spacing="10" IsHitTestVisible="False">
+                    <Border Width="72" Height="72" CornerRadius="36" Background="#171b26"
+                            HorizontalAlignment="Center">
+                        <FontIcon Glyph="&#xE714;" FontSize="30" Foreground="#9b8afb"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="Your next watch starts here" FontSize="20" FontWeight="SemiBold"
+                               Foreground="#e5e9f2" HorizontalAlignment="Center" />
+                    <TextBlock Text="Open a video or add a few to your play queue"
+                               FontSize="13" Foreground="#8993a6" HorizontalAlignment="Center" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <Border Grid.Row="0" Grid.Column="1" Margin="0,0,0,16" Padding="16" CornerRadius="12"
+        <Border Grid.Row="1" Grid.Column="1" Margin="0,0,0,18" Padding="18" CornerRadius="14"
                 Background="#121620" BorderBrush="#242a35" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <TextBlock Text="PLAY QUEUE" FontSize="12" FontWeight="SemiBold"
-                           CharacterSpacing="120" Foreground="#aeb7c8" />
-                <Button Grid.Row="1" x:Name="OpenVideoButton" Click="OpenVideo_Click"
-                        Content="＋   Add videos" HorizontalAlignment="Stretch" Margin="0,14,0,12"
-                        Height="42" />
-                <ListView Grid.Row="2" x:Name="PlaylistView"
-                          SelectionChanged="Playlist_SelectionChanged" SelectionMode="Single"
-                          Background="Transparent" BorderThickness="0"
-                          Foreground="#e8edf7" />
-                <TextBlock Grid.Row="3" x:Name="QueueCountText" Text="0 videos"
-                           FontSize="12" Foreground="#778196" Margin="0,12,0,0" />
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="Play queue" FontSize="17" FontWeight="SemiBold"
+                                   Foreground="#f2f4fa" />
+                        <TextBlock x:Name="QueueCountText" Text="0 videos"
+                                   FontSize="12" Foreground="#8993a6" />
+                    </StackPanel>
+                    <Button Grid.Column="1" x:Name="ClearQueueButton" Click="ClearQueue_Click"
+                            Content="Clear" IsEnabled="False" VerticalAlignment="Center"
+                            ToolTipService.ToolTip="Remove all videos from the queue" />
+                </Grid>
+                <Grid Grid.Row="1">
+                    <ListView x:Name="PlaylistView" SelectionChanged="Playlist_SelectionChanged"
+                              SelectionMode="Single" Background="Transparent" BorderThickness="0"
+                              Foreground="#e8edf7">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="4,8" ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="28" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE714;" FontSize="14" Foreground="#8993a6"
+                                              VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding}" FontSize="13"
+                                               Foreground="#e5e9f2" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <StackPanel x:Name="QueueEmptyState" HorizontalAlignment="Center"
+                                VerticalAlignment="Center" Spacing="7" IsHitTestVisible="False">
+                        <FontIcon Glyph="&#xE8FD;" FontSize="25" Foreground="#687286"
+                                  HorizontalAlignment="Center" />
+                        <TextBlock Text="Nothing in the queue yet" FontSize="13"
+                                   Foreground="#aeb7c8" HorizontalAlignment="Center" />
+                        <TextBlock Text="Add videos to build your watch list"
+                                   FontSize="11" Foreground="#778196" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock Grid.Row="2" x:Name="StatusText" Text="Ready when you are"
+                           FontSize="12" Foreground="#8993a6" Margin="0,14,0,0"
+                           TextTrimming="CharacterEllipsis" />
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Grid.ColumnSpan="2" Padding="18,14" CornerRadius="12"
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Padding="20,16" CornerRadius="14"
                 Background="#121620" BorderBrush="#242a35" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Grid Grid.Row="0" ColumnSpacing="12">
+                <Grid Grid.Row="0" ColumnSpacing="14">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="CurrentTimeText" Text="00:00" VerticalAlignment="Center"
-                               FontSize="12" Foreground="#aeb7c8" />
+                               FontSize="12" FontFamily="Consolas" Foreground="#aeb7c8" />
                     <Slider Grid.Column="1" x:Name="SeekSlider" Minimum="0" Maximum="1" Value="0"
                             ValueChanged="SeekSlider_ValueChanged" VerticalAlignment="Center"
                             IsEnabled="False" />
                     <TextBlock Grid.Column="2" x:Name="DurationText" Text="00:00"
-                               VerticalAlignment="Center" FontSize="12" Foreground="#aeb7c8" />
+                               VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
+                               Foreground="#aeb7c8" />
                 </Grid>
 
-                <Grid Grid.Row="1" Margin="0,8,0,0" ColumnSpacing="10">
+                <Grid Grid.Row="1" Margin="0,12,0,0" ColumnSpacing="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <Button x:Name="OpenBottomButton" Click="OpenVideo_Click" Content="Open" />
-                        <Button x:Name="BackTenButton" Click="SeekBackward_Click" Content="−10s" ToolTipService.ToolTip="Back 10 seconds" />
-                        <Button x:Name="PreviousButton" Click="Previous_Click" Content="|◀" ToolTipService.ToolTip="Previous video" />
-                        <Button x:Name="PlayPauseButton" Click="PlayPause_Click" Content="Play" MinWidth="76" />
-                        <Button x:Name="StopButton" Click="Stop_Click" Content="Stop" />
-                        <Button x:Name="NextButton" Click="Next_Click" Content="▶|" ToolTipService.ToolTip="Next video" />
-                        <Button x:Name="ForwardTenButton" Click="SeekForward_Click" Content="+10s" ToolTipService.ToolTip="Forward 10 seconds" />
-                        <ToggleButton x:Name="RepeatButton" Content="Repeat" ToolTipService.ToolTip="Repeat the current video" />
-                        <Button x:Name="FullWindowButton" Click="FullWindow_Click" Content="Full screen"
-                                ToolTipService.ToolTip="Toggle video full window" />
+                    <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="NOW PLAYING" FontSize="10" CharacterSpacing="100"
+                                   Foreground="#8993a6" />
+                        <TextBlock x:Name="NowPlayingText" Text="Choose a video"
+                                   FontSize="13" FontWeight="SemiBold" Foreground="#e5e9f2"
+                                   TextTrimming="CharacterEllipsis" />
                     </StackPanel>
-                    <TextBlock Grid.Column="1" x:Name="StatusText" Text="Ready"
-                               VerticalAlignment="Center" FontSize="13" Foreground="#c7cfdd"
-                               TextTrimming="CharacterEllipsis" MaxWidth="260" />
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                                VerticalAlignment="Center">
+                        <Button x:Name="PreviousButton" Click="Previous_Click" Content="|◀"
+                                ToolTipService.ToolTip="Previous video (or restart current)" />
+                        <Button x:Name="BackTenButton" Click="SeekBackward_Click" Content="−10s"
+                                ToolTipService.ToolTip="Back 10 seconds" />
+                        <Button x:Name="PlayPauseButton" Click="PlayPause_Click" Content="Play"
+                                MinWidth="84" />
+                        <Button x:Name="StopButton" Click="Stop_Click" Content="Stop" />
+                        <Button x:Name="ForwardTenButton" Click="SeekForward_Click" Content="+10s"
+                                ToolTipService.ToolTip="Forward 10 seconds" />
+                        <Button x:Name="NextButton" Click="Next_Click" Content="▶|"
+                                ToolTipService.ToolTip="Next video" />
+                    </StackPanel>
+
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
                                 HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <TextBlock Text="Speed" VerticalAlignment="Center" FontSize="12"
-                                   Foreground="#aeb7c8" />
-                        <ComboBox x:Name="SpeedPicker" Width="90" SelectedIndex="2"
+                        <ToggleButton x:Name="RepeatButton" Click="Repeat_Click" Content="Repeat off"
+                                      ToolTipService.ToolTip="Repeat the current video" />
+                        <ComboBox x:Name="SpeedPicker" Width="84" SelectedIndex="2"
+                                  ToolTipService.ToolTip="Playback speed"
                                   SelectionChanged="SpeedPicker_SelectionChanged">
                             <ComboBoxItem Content="0.5×" />
                             <ComboBoxItem Content="0.75×" />
@@ -116,9 +188,12 @@
                             <ComboBoxItem Content="2×" />
                         </ComboBox>
                         <Button x:Name="MuteButton" Click="Mute_Click" Content="Mute" />
-                        <Slider x:Name="VolumeSlider" Width="110" Minimum="0" Maximum="100"
+                        <Slider x:Name="VolumeSlider" Width="96" Minimum="0" Maximum="100"
                                 Value="70" ValueChanged="VolumeSlider_ValueChanged"
-                                VerticalAlignment="Center" />
+                                VerticalAlignment="Center"
+                                ToolTipService.ToolTip="Volume" />
+                        <Button x:Name="FullWindowButton" Click="FullWindow_Click" Content="Full screen"
+                                ToolTipService.ToolTip="Toggle full-screen video" />
                     </StackPanel>
                 </Grid>
             </Grid>

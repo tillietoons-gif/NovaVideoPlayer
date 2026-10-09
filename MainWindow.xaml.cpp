@@ -70,8 +70,9 @@ namespace winrt::App1::implementation
         });
         m_timer.Start();
 
-        this->StatusText().Text(L"Ready - add videos to your queue");
+        this->StatusText().Text(L"Ready when you are");
         this->QueueCountText().Text(L"0 videos");
+        this->NowPlayingText().Text(L"Choose a video");
         this->MuteButton().Content(box_value(L"Mute"));
     }
 
@@ -154,7 +155,10 @@ namespace winrt::App1::implementation
             m_playlistItems.Append(hstring(fileName));
         }
 
-        this->QueueCountText().Text(to_hstring(m_playlist.size()) + L" videos");
+        this->QueueCountText().Text(to_hstring(m_playlist.size()) +
+            (m_playlist.size() == 1 ? L" video" : L" videos"));
+        this->ClearQueueButton().IsEnabled(!m_playlist.empty());
+        this->QueueEmptyState().Visibility(Visibility::Collapsed);
         if (wasEmpty && !m_playlist.empty())
         {
             this->PlaylistView().SelectedIndex(0);
@@ -198,7 +202,8 @@ namespace winrt::App1::implementation
         auto mediaSource = MediaSource::CreateFromUri(Uri(NormalizeFilePathForUri(filePath)));
         m_mediaPlayer.Source(mediaSource);
         this->EmptyState().Visibility(Visibility::Collapsed);
-        this->StatusText().Text(hstring(m_playlistItems.GetAt(static_cast<uint32_t>(index))));
+        this->NowPlayingText().Text(hstring(m_playlistItems.GetAt(static_cast<uint32_t>(index))));
+        this->StatusText().Text(L"Playing");
         m_mediaPlayer.Play();
         UpdatePlaybackState();
         UpdateTimeline();
@@ -215,10 +220,12 @@ namespace winrt::App1::implementation
         if (m_mediaPlayer.PlaybackSession().PlaybackState() == MediaPlaybackState::Playing)
         {
             m_mediaPlayer.Pause();
+            this->StatusText().Text(L"Paused");
         }
         else
         {
             m_mediaPlayer.Play();
+            this->StatusText().Text(L"Playing");
         }
         UpdatePlaybackState();
     }
@@ -320,6 +327,38 @@ namespace winrt::App1::implementation
     {
         m_mediaPlayer.IsMuted(!m_mediaPlayer.IsMuted());
         this->MuteButton().Content(box_value(m_mediaPlayer.IsMuted() ? L"Unmute" : L"Mute"));
+    }
+
+    void MainWindow::Repeat_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        auto isRepeating = this->RepeatButton().IsChecked().Value();
+        this->RepeatButton().Content(box_value(isRepeating ? L"Repeat on" : L"Repeat off"));
+        this->StatusText().Text(isRepeating ? L"Repeating current video" : L"Repeat off");
+    }
+
+    void MainWindow::ClearQueue_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        m_mediaPlayer.Pause();
+        m_mediaPlayer.Source(Windows::Media::Playback::IMediaPlaybackSource{ nullptr });
+        m_playlist.clear();
+        m_playlistItems.Clear();
+        m_currentIndex = 0;
+
+        m_updatingPlaylistSelection = true;
+        this->PlaylistView().SelectedIndex(-1);
+        m_updatingPlaylistSelection = false;
+
+        this->QueueCountText().Text(L"0 videos");
+        this->ClearQueueButton().IsEnabled(false);
+        this->QueueEmptyState().Visibility(Visibility::Visible);
+        this->EmptyState().Visibility(Visibility::Visible);
+        this->NowPlayingText().Text(L"Choose a video");
+        this->StatusText().Text(L"Queue cleared");
+        this->CurrentTimeText().Text(L"00:00");
+        this->DurationText().Text(L"00:00");
+        this->SeekSlider().Value(0);
+        this->SeekSlider().IsEnabled(false);
+        UpdatePlaybackState();
     }
 
     void MainWindow::SeekSlider_ValueChanged(IInspectable const&, RangeBaseValueChangedEventArgs const&)
