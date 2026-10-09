@@ -7,12 +7,15 @@
 #include <algorithm>
 #include <chrono>
 #include <commdlg.h>
+#include <cwctype>
 #include <cwchar>
 #include <iomanip>
 #include <iterator>
 #include <sstream>
 #include <utility>
+#include <winrt/Windows.ApplicationModel.DataTransfer.h>
 #include <winrt/Microsoft.UI.Xaml.Automation.h>
+#include <winrt/Windows.Storage.h>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -22,6 +25,8 @@ using namespace Microsoft::UI::Xaml::Automation;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Media::Playback;
+using namespace winrt::Windows::ApplicationModel::DataTransfer;
+using namespace winrt::Windows::Storage;
 
 namespace winrt::App1::implementation
 {
@@ -43,6 +48,7 @@ namespace winrt::App1::implementation
         this->VideoPlayer().SetMediaPlayer(m_mediaPlayer);
         this->PlaylistView().ItemsSource(m_playlistItems = single_threaded_observable_vector<hstring>());
         this->VolumeSlider().Value(70);
+        this->AudioBalanceSlider().Value(0);
         this->MuteButton().IsChecked(false);
 
         m_mediaPlayer.MediaFailed([this](MediaPlayer const&, MediaPlayerFailedEventArgs const& args)
@@ -70,6 +76,7 @@ namespace winrt::App1::implementation
         {
             UpdateTimeline();
             UpdatePlaybackState();
+            RefreshSubtitleTracks();
         });
         m_timer.Start();
 
@@ -110,8 +117,8 @@ namespace winrt::App1::implementation
         openFileDialog.lpstrFile = selectedFiles.data();
         openFileDialog.nMaxFile = static_cast<DWORD>(selectedFiles.size());
         openFileDialog.lpstrFilter =
-            L"Video files (*.mp4;*.m4v;*.mov;*.wmv;*.avi;*.mkv;*.mpeg;*.mpg;*.3gp;*.asf)\0"
-            L"*.mp4;*.m4v;*.mov;*.wmv;*.avi;*.mkv;*.mpeg;*.mpg;*.3gp;*.asf\0"
+            L"Media files (*.mp4;*.m4v;*.mov;*.wmv;*.avi;*.mkv;*.mpeg;*.mpg;*.3gp;*.asf;*.mp3;*.wav;*.wma;*.m4a;*.aac;*.flac)\0"
+            L"*.mp4;*.m4v;*.mov;*.wmv;*.avi;*.mkv;*.mpeg;*.mpg;*.3gp;*.asf;*.mp3;*.wav;*.wma;*.m4a;*.aac;*.flac\0"
             L"All files (*.*)\0*.*\0";
         openFileDialog.nFilterIndex = 1;
         openFileDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
@@ -148,26 +155,96 @@ namespace winrt::App1::implementation
             }
         }
 
+        QueueMediaFiles(selectedPaths);
+    }
+
+    void MainWindow::QueueMediaFiles(std::vector<std::wstring> const& paths)
+    {
         auto const wasEmpty = m_playlist.empty();
-        for (auto const& path : selectedPaths)
+        size_t addedCount = 0;
+        size_t subtitleCount = 0;
+        std::vector<std::wstring> subtitlePaths;
+
+        for (auto const& path : paths)
         {
+            auto extensionStart = path.find_last_of(L'.');
+            std::wstring extension = extensionStart == std::wstring::npos ? L"" : path.substr(extensionStart);
+            std::transform(extension.begin(), extension.end(), extension.begin(),
+                [](wchar_t character) { return static_cast<wchar_t>(std::towlower(character)); });
+
+            if (extension == L".srt" || extension == L".vtt" || extension == L".ttml")
+            {
+                subtitlePaths.push_back(path);
+                continue;
+            }
+
+            static constexpr wchar_t const* supportedExtensions[] = {
+                L".mp4", L".m4v", L".mov", L".wmv", L".avi", L".mkv",
+                L".mpeg", L".mpg", L".3gp", L".asf", L".mp3", L".wav",
+                L".wma", L".m4a", L".aac", L".flac"
+            };
+            if (std::find_if(std::begin(supportedExtensions), std::end(supportedExtensions),
+                [&extension](wchar_t const* supported) { return extension == supported; }) ==
+                std::end(supportedExtensions))
+            {
+                continue;
+            }
+
             m_playlist.push_back(path);
             auto nameStart = path.find_last_of(L"\\/");
             auto fileName = nameStart == std::wstring::npos ? path : path.substr(nameStart + 1);
             m_playlistItems.Append(hstring(fileName));
+            ++addedCount;
         }
 
         this->QueueCountText().Text(to_hstring(m_playlist.size()) +
-            (m_playlist.size() == 1 ? L" video" : L" videos"));
+            (m_playlist.size() == 1 ? L" item" : L" items"));
         this->ClearQueueButton().IsEnabled(!m_playlist.empty());
-        this->QueueEmptyState().Visibility(Visibility::Collapsed);
+        this->QueueEmptyState().Visibility(m_playlist.empty() ? Visibility::Visible : Visibility::Collapsed);
         if (wasEmpty && !m_playlist.empty())
         {
             this->PlaylistView().SelectedIndex(0);
         }
-        else if (!selectedPaths.empty())
+        else if (addedCount > 0)
         {
-            this->StatusText().Text(to_hstring(selectedPaths.size()) + L" video(s) added to queue");
+            this->StatusText().Text(to_hstring(addedCount) + L" media item(s) added to queue");
+        }
+        for (auto const& path : subtitlePaths)
+        {
+            if (AddSubtitleFile(path))
+            {
+                ++subtitleCount;
+            }
+        }
+        if (subtitleCount > 0)
+        {
+            this->StatusText().Text(to_hstring(subtitleCount) + L" subtitle file(s) loaded");
+        }
+        else if (addedCount == 0 && subtitlePaths.empty() && !paths.empty())
+        {
+            this->StatusText().Text(L"No supported media or subtitle files found");
+        }
+    }
+
+    bool MainWindow::AddSubtitleFile(std::wstring const& path)
+    {
+        if (!m_currentMediaSource)
+        {
+            this->StatusText().Text(L"Open a media item before loading subtitles");
+            return false;
+        }
+
+        try
+        {
+            auto subtitleSource = TimedTextSource::CreateFromUri(Uri(NormalizeFilePathForUri(path)));
+            m_currentMediaSource.ExternalTimedTextSources().Append(subtitleSource);
+            this->StatusText().Text(L"Subtitle added - choose it from the subtitle menu");
+            return true;
+        }
+        catch (hresult_error const& error)
+        {
+            this->StatusText().Text(L"Could not load subtitle: " + error.message());
+            return false;
         }
     }
 
@@ -201,11 +278,19 @@ namespace winrt::App1::implementation
         }
 
         auto filePath = m_playlist[index];
-        auto mediaSource = MediaSource::CreateFromUri(Uri(NormalizeFilePathForUri(filePath)));
-        m_mediaPlayer.Source(mediaSource);
+        m_currentMediaSource = MediaSource::CreateFromUri(Uri(NormalizeFilePathForUri(filePath)));
+        m_currentPlaybackItem = MediaPlaybackItem(m_currentMediaSource);
+        m_subtitleTrackIndices.clear();
+        m_updatingSubtitlePicker = true;
+        this->SubtitlePicker().Items().Clear();
+        this->SubtitlePicker().Items().Append(box_value(L"Subtitles off"));
+        this->SubtitlePicker().SelectedIndex(0);
+        m_updatingSubtitlePicker = false;
+        m_mediaPlayer.Source(m_currentPlaybackItem);
         this->EmptyState().Visibility(Visibility::Collapsed);
         this->NowPlayingText().Text(hstring(m_playlistItems.GetAt(static_cast<uint32_t>(index))));
         this->StatusText().Text(L"Playing");
+        RefreshSubtitleTracks();
         m_mediaPlayer.Play();
         UpdatePlaybackState();
         UpdateTimeline();
@@ -283,6 +368,18 @@ namespace winrt::App1::implementation
             return;
         }
 
+        if (m_shuffleEnabled && m_playlist.size() > 1)
+        {
+            std::uniform_int_distribution<size_t> chooseTrack(0, m_playlist.size() - 2);
+            auto nextIndex = chooseTrack(m_random);
+            if (nextIndex >= m_currentIndex)
+            {
+                ++nextIndex;
+            }
+            PlayIndex(nextIndex);
+            return;
+        }
+
         if (m_currentIndex + 1 >= m_playlist.size())
         {
             this->StatusText().Text(L"End of queue");
@@ -341,10 +438,18 @@ namespace winrt::App1::implementation
         this->StatusText().Text(isRepeating ? L"Repeating current video" : L"Repeat off");
     }
 
+    void MainWindow::Shuffle_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        m_shuffleEnabled = this->ShuffleButton().IsChecked().Value();
+        this->StatusText().Text(m_shuffleEnabled ? L"Shuffle enabled" : L"Shuffle disabled");
+    }
+
     void MainWindow::ClearQueue_Click(IInspectable const&, RoutedEventArgs const&)
     {
         m_mediaPlayer.Pause();
         m_mediaPlayer.Source(Windows::Media::Playback::IMediaPlaybackSource{ nullptr });
+        m_currentPlaybackItem = nullptr;
+        m_currentMediaSource = nullptr;
         m_playlist.clear();
         m_playlistItems.Clear();
         m_currentIndex = 0;
@@ -363,7 +468,212 @@ namespace winrt::App1::implementation
         this->DurationText().Text(L"00:00");
         this->SeekSlider().Value(0);
         this->SeekSlider().IsEnabled(false);
+        m_subtitleTrackIndices.clear();
+        m_updatingSubtitlePicker = true;
+        this->SubtitlePicker().Items().Clear();
+        this->SubtitlePicker().Items().Append(box_value(L"Subtitles off"));
+        this->SubtitlePicker().SelectedIndex(0);
+        m_updatingSubtitlePicker = false;
         UpdatePlaybackState();
+    }
+
+    void MainWindow::OpenSubtitle_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        if (!m_currentMediaSource)
+        {
+            this->StatusText().Text(L"Open a media item before loading subtitles");
+            return;
+        }
+
+        std::vector<wchar_t> selectedFile(32768, L'\0');
+        OPENFILENAMEW dialog{};
+        dialog.lStructSize = sizeof(dialog);
+        dialog.lpstrFile = selectedFile.data();
+        dialog.nMaxFile = static_cast<DWORD>(selectedFile.size());
+        dialog.lpstrFilter = L"Subtitle files (*.srt;*.vtt;*.ttml)\0*.srt;*.vtt;*.ttml\0All files (*.*)\0*.*\0";
+        dialog.nFilterIndex = 1;
+        dialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+        if (GetOpenFileNameW(&dialog))
+        {
+            AddSubtitleFile(selectedFile.data());
+        }
+        else if (auto error = CommDlgExtendedError(); error != 0)
+        {
+            this->StatusText().Text(L"Could not open subtitle picker (error " +
+                to_hstring(static_cast<uint32_t>(error)) + L")");
+        }
+    }
+
+    void MainWindow::RootGrid_DragOver(IInspectable const&, DragEventArgs const& args)
+    {
+        auto data = args.DataView();
+        if (data.Contains(StandardDataFormats::StorageItems()))
+        {
+            args.AcceptedOperation(DataPackageOperation::Copy);
+        }
+        else
+        {
+            args.AcceptedOperation(DataPackageOperation::None);
+        }
+        args.Handled(true);
+    }
+
+    void MainWindow::RootGrid_DragEnter(IInspectable const&, DragEventArgs const& args)
+    {
+        if (args.DataView().Contains(StandardDataFormats::StorageItems()))
+        {
+            this->DropOverlay().Visibility(Visibility::Visible);
+            args.AcceptedOperation(DataPackageOperation::Copy);
+        }
+    }
+
+    void MainWindow::RootGrid_DragLeave(IInspectable const&, DragEventArgs const&)
+    {
+        this->DropOverlay().Visibility(Visibility::Collapsed);
+    }
+
+    fire_and_forget MainWindow::RootGrid_Drop(IInspectable const&, DragEventArgs const& args)
+    {
+        auto lifetime = get_strong();
+        auto dropEvent = args;
+        this->DropOverlay().Visibility(Visibility::Collapsed);
+
+        try
+        {
+            auto data = dropEvent.DataView();
+            if (!data.Contains(StandardDataFormats::StorageItems()))
+            {
+                co_return;
+            }
+
+            auto storageItems = co_await data.GetStorageItemsAsync();
+            std::vector<std::wstring> paths;
+            for (auto const& item : storageItems)
+            {
+                if (item.IsOfType(StorageItemTypes::File))
+                {
+                    paths.emplace_back(item.as<StorageFile>().Path().c_str());
+                }
+            }
+
+            QueueMediaFiles(paths);
+            dropEvent.AcceptedOperation(DataPackageOperation::Copy);
+            dropEvent.Handled(true);
+        }
+        catch (hresult_error const& error)
+        {
+            this->StatusText().Text(L"Could not read dropped files: " + error.message());
+        }
+    }
+
+    void MainWindow::CompactMode_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        m_compactMode = this->CompactModeButton().IsChecked().Value();
+        this->QueuePanel().Visibility(m_compactMode ? Visibility::Collapsed : Visibility::Visible);
+        this->QueueColumn().Width(GridLength{ m_compactMode ? 0.0 : 280.0 });
+        this->StatusText().Text(m_compactMode ? L"Compact theater mode" : L"Queue visible");
+    }
+
+    void MainWindow::RootGrid_KeyDown(IInspectable const&, Input::KeyRoutedEventArgs const& args)
+    {
+        switch (args.Key())
+        {
+        case Windows::System::VirtualKey::Space:
+            PlayPause_Click(nullptr, RoutedEventArgs{ nullptr });
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::Left:
+            SeekBy(-5);
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::Right:
+            SeekBy(5);
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::Up:
+            this->VolumeSlider().Value(std::min(100.0, this->VolumeSlider().Value() + 5.0));
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::Down:
+            this->VolumeSlider().Value(std::max(0.0, this->VolumeSlider().Value() - 5.0));
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::M:
+            Mute_Click(nullptr, RoutedEventArgs{ nullptr });
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::F:
+            FullWindow_Click(nullptr, RoutedEventArgs{ nullptr });
+            args.Handled(true);
+            break;
+        default:
+            break;
+        }
+    }
+
+    void MainWindow::RefreshSubtitleTracks()
+    {
+        if (!m_currentPlaybackItem)
+        {
+            return;
+        }
+
+        auto tracks = m_currentPlaybackItem.TimedMetadataTracks();
+        std::vector<uint32_t> subtitleIndices;
+        for (uint32_t index = 0; index < tracks.Size(); ++index)
+        {
+            auto kind = tracks.GetAt(index).TimedMetadataKind();
+            if (kind == TimedMetadataKind::Subtitle || kind == TimedMetadataKind::Caption ||
+                kind == TimedMetadataKind::ImageSubtitle)
+            {
+                subtitleIndices.push_back(index);
+            }
+        }
+
+        if (subtitleIndices == m_subtitleTrackIndices)
+        {
+            return;
+        }
+
+        auto previousSelection = this->SubtitlePicker().SelectedIndex();
+        m_subtitleTrackIndices = std::move(subtitleIndices);
+        m_updatingSubtitlePicker = true;
+        this->SubtitlePicker().Items().Clear();
+        this->SubtitlePicker().Items().Append(box_value(L"Subtitles off"));
+        for (uint32_t index = 0; index < m_subtitleTrackIndices.size(); ++index)
+        {
+            auto track = tracks.GetAt(m_subtitleTrackIndices[index]);
+            auto name = track.Name();
+            if (name.empty())
+            {
+                name = L"Subtitle " + to_hstring(index + 1);
+            }
+            this->SubtitlePicker().Items().Append(box_value(name));
+        }
+        auto selection = std::clamp(previousSelection, 0,
+            static_cast<int32_t>(m_subtitleTrackIndices.size()));
+        this->SubtitlePicker().SelectedIndex(selection);
+        m_updatingSubtitlePicker = false;
+    }
+
+    void MainWindow::SubtitlePicker_SelectionChanged(IInspectable const&, SelectionChangedEventArgs const&)
+    {
+        if (m_updatingSubtitlePicker || !m_currentPlaybackItem)
+        {
+            return;
+        }
+
+        auto selected = this->SubtitlePicker().SelectedIndex();
+        auto tracks = m_currentPlaybackItem.TimedMetadataTracks();
+        for (uint32_t index = 0; index < m_subtitleTrackIndices.size(); ++index)
+        {
+            auto mode = selected == static_cast<int32_t>(index + 1)
+                ? TimedMetadataTrackPresentationMode::PlatformPresented
+                : TimedMetadataTrackPresentationMode::Disabled;
+            tracks.SetPresentationMode(m_subtitleTrackIndices[index], mode);
+        }
+        this->StatusText().Text(selected > 0 ? L"Subtitle track enabled" : L"Subtitles off");
     }
 
     void MainWindow::SeekSlider_ValueChanged(IInspectable const&, RangeBaseValueChangedEventArgs const&)
@@ -386,6 +696,14 @@ namespace winrt::App1::implementation
         if (m_mediaPlayer)
         {
             m_mediaPlayer.Volume(this->VolumeSlider().Value() / 100.0);
+        }
+    }
+
+    void MainWindow::AudioBalanceSlider_ValueChanged(IInspectable const&, RangeBaseValueChangedEventArgs const&)
+    {
+        if (m_mediaPlayer)
+        {
+            m_mediaPlayer.AudioBalance(this->AudioBalanceSlider().Value() / 100.0);
         }
     }
 

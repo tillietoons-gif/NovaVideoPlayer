@@ -9,15 +9,17 @@
     mc:Ignorable="d"
     Title="Aster Player">
 
-    <Grid x:Name="RootGrid" Background="#0b0d12" Padding="24">
+    <Grid x:Name="RootGrid" Background="#0b0d12" Padding="20" AllowDrop="True"
+          DragOver="RootGrid_DragOver" DragEnter="RootGrid_DragEnter"
+          DragLeave="RootGrid_DragLeave" Drop="RootGrid_Drop"
+          KeyDown="RootGrid_KeyDown" IsTabStop="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition x:Name="QueueColumn" Width="280" />
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,20">
@@ -37,13 +39,22 @@
                                Foreground="#8993a6" />
                 </StackPanel>
             </StackPanel>
-            <AppBarButton Grid.Column="1" x:Name="OpenVideoButton" Click="OpenVideo_Click"
-                    ToolTipService.ToolTip="Choose one or more video files"
-                    AutomationProperties.Name="Open video">
-                <AppBarButton.Icon>
-                    <SymbolIcon Symbol="OpenFile" />
-                </AppBarButton.Icon>
-            </AppBarButton>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                <AppBarToggleButton x:Name="CompactModeButton" Click="CompactMode_Click"
+                                    ToolTipService.ToolTip="Hide or show the play queue"
+                                    AutomationProperties.Name="Toggle compact mode">
+                    <AppBarToggleButton.Icon>
+                        <SymbolIcon Symbol="ViewAll" />
+                    </AppBarToggleButton.Icon>
+                </AppBarToggleButton>
+                <AppBarButton x:Name="OpenVideoButton" Click="OpenVideo_Click"
+                              ToolTipService.ToolTip="Choose video or audio files"
+                              AutomationProperties.Name="Open media">
+                    <AppBarButton.Icon>
+                        <SymbolIcon Symbol="OpenFile" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+            </StackPanel>
         </Grid>
 
         <Border Grid.Row="1" Grid.Column="0" Margin="0,0,18,18" CornerRadius="14"
@@ -53,6 +64,11 @@
                                     Stretch="Uniform" />
                 <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
                             Spacing="10" IsHitTestVisible="False">
+                    <StackPanel.Transitions>
+                        <TransitionCollection>
+                            <EntranceThemeTransition />
+                        </TransitionCollection>
+                    </StackPanel.Transitions>
                     <Border Width="72" Height="72" CornerRadius="36" Background="#171b26"
                             HorizontalAlignment="Center">
                         <SymbolIcon Symbol="Video" Foreground="#9b8afb"
@@ -63,10 +79,27 @@
                     <TextBlock Text="Open a video or add a few to your play queue"
                                FontSize="13" Foreground="#8993a6" HorizontalAlignment="Center" />
                 </StackPanel>
+                <Border x:Name="DropOverlay" Visibility="Collapsed" Background="#CC111827"
+                        BorderBrush="#9b8afb" BorderThickness="2" CornerRadius="14"
+                        IsHitTestVisible="False">
+                    <Border.Transitions>
+                        <TransitionCollection>
+                            <EntranceThemeTransition />
+                        </TransitionCollection>
+                    </Border.Transitions>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                        <SymbolIcon Symbol="Add" Foreground="#c4b8ff"
+                                    HorizontalAlignment="Center" />
+                        <TextBlock Text="Drop media or subtitles"
+                                   Foreground="White" FontSize="18" FontWeight="SemiBold" />
+                        <TextBlock Text="Media joins the queue · subtitles attach to the current item"
+                                   Foreground="#c8ceda" FontSize="12" />
+                    </StackPanel>
+                </Border>
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Grid.Column="1" Margin="0,0,0,18" Padding="18" CornerRadius="14"
+        <Border x:Name="QueuePanel" Grid.Row="1" Grid.Column="1" Margin="0,0,0,18" Padding="18" CornerRadius="14"
                 Background="#121620" BorderBrush="#242a35" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
@@ -98,6 +131,11 @@
                     <ListView x:Name="PlaylistView" SelectionChanged="Playlist_SelectionChanged"
                               SelectionMode="Single" Background="Transparent" BorderThickness="0"
                               Foreground="#e8edf7">
+                        <ListView.ItemContainerTransitions>
+                            <TransitionCollection>
+                                <EntranceThemeTransition IsStaggeringEnabled="True" />
+                            </TransitionCollection>
+                        </ListView.ItemContainerTransitions>
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Grid Padding="4,8" ColumnSpacing="10">
@@ -116,6 +154,11 @@
                     </ListView>
                     <StackPanel x:Name="QueueEmptyState" HorizontalAlignment="Center"
                                 VerticalAlignment="Center" Spacing="7" IsHitTestVisible="False">
+                        <StackPanel.Transitions>
+                            <TransitionCollection>
+                                <EntranceThemeTransition />
+                            </TransitionCollection>
+                        </StackPanel.Transitions>
                         <SymbolIcon Symbol="Play" Foreground="#687286"
                                     HorizontalAlignment="Center" />
                         <TextBlock Text="Nothing in the queue yet" FontSize="13"
@@ -124,9 +167,6 @@
                                    FontSize="11" Foreground="#778196" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Grid>
-                <TextBlock Grid.Row="2" x:Name="StatusText" Text="Ready when you are"
-                           FontSize="12" Foreground="#8993a6" Margin="0,14,0,0"
-                           TextTrimming="CharacterEllipsis" />
             </Grid>
         </Border>
 
@@ -165,6 +205,10 @@
                         <TextBlock x:Name="NowPlayingText" Text="Choose a video"
                                    FontSize="13" FontWeight="SemiBold" Foreground="#e5e9f2"
                                    TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="StatusText" Text="Ready when you are"
+                                   FontSize="10" Foreground="#8993a6"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTipService.ToolTip="Shortcuts: Space play/pause · Left/Right seek · Up/Down volume · M mute · F full screen" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
@@ -215,6 +259,13 @@
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
                                 HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <AppBarToggleButton x:Name="ShuffleButton" Click="Shuffle_Click"
+                                            ToolTipService.ToolTip="Shuffle queue"
+                                            AutomationProperties.Name="Shuffle queue">
+                            <AppBarToggleButton.Icon>
+                                <SymbolIcon Symbol="Shuffle" />
+                            </AppBarToggleButton.Icon>
+                        </AppBarToggleButton>
                         <AppBarToggleButton x:Name="RepeatButton" Click="Repeat_Click"
                                       ToolTipService.ToolTip="Repeat the current video"
                                       AutomationProperties.Name="Repeat current video">
@@ -245,6 +296,24 @@
                                 VerticalAlignment="Center"
                                 ToolTipService.ToolTip="Volume"
                                 AutomationProperties.Name="Volume" />
+                        <AppBarButton x:Name="OpenSubtitleButton" Click="OpenSubtitle_Click"
+                                      ToolTipService.ToolTip="Load an external subtitle file"
+                                      AutomationProperties.Name="Load subtitles">
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Caption" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <ComboBox x:Name="SubtitlePicker" Width="112" SelectedIndex="0"
+                                  ToolTipService.ToolTip="Subtitle track"
+                                  AutomationProperties.Name="Subtitle track"
+                                  SelectionChanged="SubtitlePicker_SelectionChanged">
+                            <ComboBoxItem Content="Subtitles off" />
+                        </ComboBox>
+                        <Slider x:Name="AudioBalanceSlider" Width="72" Minimum="-100" Maximum="100"
+                                Value="0" ValueChanged="AudioBalanceSlider_ValueChanged"
+                                VerticalAlignment="Center"
+                                ToolTipService.ToolTip="Stereo balance: left to right"
+                                AutomationProperties.Name="Stereo balance" />
                         <AppBarButton x:Name="FullWindowButton" Click="FullWindow_Click"
                                 ToolTipService.ToolTip="Toggle full-screen video"
                                 AutomationProperties.Name="Full screen">
