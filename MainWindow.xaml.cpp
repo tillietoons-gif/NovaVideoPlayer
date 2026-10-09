@@ -12,11 +12,13 @@
 #include <iterator>
 #include <sstream>
 #include <utility>
+#include <winrt/Microsoft.UI.Xaml.Automation.h>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
 using namespace Microsoft::UI::Xaml::Controls;
 using namespace Microsoft::UI::Xaml::Controls::Primitives;
+using namespace Microsoft::UI::Xaml::Automation;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Media::Playback;
@@ -320,7 +322,8 @@ namespace winrt::App1::implementation
     {
         auto fullWindow = !this->VideoPlayer().IsFullWindow();
         this->VideoPlayer().IsFullWindow(fullWindow);
-        this->FullWindowButton().Content().as<FontIcon>().Glyph(fullWindow ? L"\uE73F" : L"\uE740");
+        this->FullWindowButton().Icon(SymbolIcon(fullWindow ? Symbol::BackToWindow : Symbol::FullScreen));
+        AutomationProperties::SetName(this->FullWindowButton(), fullWindow ? L"Exit full screen" : L"Full screen");
     }
 
     void MainWindow::Mute_Click(IInspectable const&, RoutedEventArgs const&)
@@ -328,7 +331,8 @@ namespace winrt::App1::implementation
         m_mediaPlayer.IsMuted(!m_mediaPlayer.IsMuted());
         auto isMuted = m_mediaPlayer.IsMuted();
         this->MuteButton().IsChecked(isMuted);
-        this->MuteButton().Content().as<FontIcon>().Glyph(isMuted ? L"\uE74F" : L"\uE767");
+        this->MuteButton().Icon(SymbolIcon(isMuted ? Symbol::Mute : Symbol::Volume));
+        AutomationProperties::SetName(this->MuteButton(), isMuted ? L"Unmute" : L"Mute");
     }
 
     void MainWindow::Repeat_Click(IInspectable const&, RoutedEventArgs const&)
@@ -404,7 +408,8 @@ namespace winrt::App1::implementation
     {
         auto isPlaying = m_mediaPlayer &&
             m_mediaPlayer.PlaybackSession().PlaybackState() == MediaPlaybackState::Playing;
-        this->PlayPauseButton().Content().as<FontIcon>().Glyph(isPlaying ? L"\uE103" : L"\uE102");
+        this->PlayPauseButton().Icon(SymbolIcon(isPlaying ? Symbol::Pause : Symbol::Play));
+        AutomationProperties::SetName(this->PlayPauseButton(), isPlaying ? L"Pause" : L"Play");
     }
 
     void MainWindow::UpdateTimeline()

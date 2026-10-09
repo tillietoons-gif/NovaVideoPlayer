@@ -27,8 +27,8 @@
             </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                 <Border Width="40" Height="40" CornerRadius="12" Background="#7758e8">
-                    <FontIcon Glyph="&#xE768;" FontSize="19" Foreground="White"
-                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <SymbolIcon Symbol="Video" Foreground="White"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
                 <StackPanel Spacing="1">
                     <TextBlock Text="Aster Player" FontSize="19" FontWeight="SemiBold"
@@ -37,11 +37,13 @@
                                Foreground="#8993a6" />
                 </StackPanel>
             </StackPanel>
-            <Button Grid.Column="1" x:Name="OpenVideoButton" Click="OpenVideo_Click"
-                    Height="40" Width="44" ToolTipService.ToolTip="Choose one or more video files"
+            <AppBarButton Grid.Column="1" x:Name="OpenVideoButton" Click="OpenVideo_Click"
+                    ToolTipService.ToolTip="Choose one or more video files"
                     AutomationProperties.Name="Open video">
-                <FontIcon Glyph="&#xE8E5;" FontSize="17" />
-            </Button>
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="OpenFile" />
+                </AppBarButton.Icon>
+            </AppBarButton>
         </Grid>
 
         <Border Grid.Row="1" Grid.Column="0" Margin="0,0,18,18" CornerRadius="14"
@@ -53,8 +55,8 @@
                             Spacing="10" IsHitTestVisible="False">
                     <Border Width="72" Height="72" CornerRadius="36" Background="#171b26"
                             HorizontalAlignment="Center">
-                        <FontIcon Glyph="&#xE714;" FontSize="30" Foreground="#9b8afb"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <SymbolIcon Symbol="Video" Foreground="#9b8afb"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="Your next watch starts here" FontSize="20" FontWeight="SemiBold"
                                Foreground="#e5e9f2" HorizontalAlignment="Center" />
@@ -83,12 +85,14 @@
                         <TextBlock x:Name="QueueCountText" Text="0 videos"
                                    FontSize="12" Foreground="#8993a6" />
                     </StackPanel>
-                    <Button Grid.Column="1" x:Name="ClearQueueButton" Click="ClearQueue_Click"
-                            IsEnabled="False" VerticalAlignment="Center" Width="36" Height="36"
+                    <AppBarButton Grid.Column="1" x:Name="ClearQueueButton" Click="ClearQueue_Click"
+                            IsEnabled="False" VerticalAlignment="Center"
                             ToolTipService.ToolTip="Remove all videos from the queue"
                             AutomationProperties.Name="Clear queue">
-                        <FontIcon Glyph="&#xE74D;" FontSize="14" />
-                    </Button>
+                        <AppBarButton.Icon>
+                            <SymbolIcon Symbol="Delete" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                 </Grid>
                 <Grid Grid.Row="1">
                     <ListView x:Name="PlaylistView" SelectionChanged="Playlist_SelectionChanged"
@@ -101,8 +105,8 @@
                                         <ColumnDefinition Width="28" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <FontIcon Glyph="&#xE714;" FontSize="14" Foreground="#8993a6"
-                                              VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    <SymbolIcon Symbol="Video" Foreground="#8993a6"
+                                                VerticalAlignment="Center" HorizontalAlignment="Center" />
                                     <TextBlock Grid.Column="1" Text="{Binding}" FontSize="13"
                                                Foreground="#e5e9f2" VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis" />
@@ -112,8 +116,8 @@
                     </ListView>
                     <StackPanel x:Name="QueueEmptyState" HorizontalAlignment="Center"
                                 VerticalAlignment="Center" Spacing="7" IsHitTestVisible="False">
-                        <FontIcon Glyph="&#xE8FD;" FontSize="25" Foreground="#687286"
-                                  HorizontalAlignment="Center" />
+                        <SymbolIcon Symbol="Play" Foreground="#687286"
+                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Nothing in the queue yet" FontSize="13"
                                    Foreground="#aeb7c8" HorizontalAlignment="Center" />
                         <TextBlock Text="Add videos to build your watch list"
@@ -165,45 +169,59 @@
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
                                 VerticalAlignment="Center">
-                        <Button x:Name="PreviousButton" Click="Previous_Click" Width="40" Height="40"
+                        <AppBarButton x:Name="PreviousButton" Click="Previous_Click"
                                 ToolTipService.ToolTip="Previous video (or restart current)"
                                 AutomationProperties.Name="Previous video">
-                            <FontIcon Glyph="&#xE100;" FontSize="15" />
-                        </Button>
-                        <Button x:Name="BackTenButton" Click="SeekBackward_Click" Width="40" Height="40"
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Previous" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarButton x:Name="BackTenButton" Click="SeekBackward_Click"
                                 ToolTipService.ToolTip="Back 10 seconds"
                                 AutomationProperties.Name="Back 10 seconds">
-                            <FontIcon Glyph="&#xE149;" FontSize="15" />
-                        </Button>
-                        <Button x:Name="PlayPauseButton" Click="PlayPause_Click" Width="48" Height="40"
-                                Background="#7758e8" Foreground="White" ToolTipService.ToolTip="Play"
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Back" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarButton x:Name="PlayPauseButton" Click="PlayPause_Click"
+                                ToolTipService.ToolTip="Play"
                                 AutomationProperties.Name="Play">
-                            <FontIcon Glyph="&#xE102;" FontSize="16" />
-                        </Button>
-                        <Button x:Name="StopButton" Click="Stop_Click" Width="40" Height="40"
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Play" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarButton x:Name="StopButton" Click="Stop_Click"
                                 ToolTipService.ToolTip="Stop"
                                 AutomationProperties.Name="Stop">
-                            <FontIcon Glyph="&#xE15B;" FontSize="14" />
-                        </Button>
-                        <Button x:Name="ForwardTenButton" Click="SeekForward_Click" Width="40" Height="40"
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Stop" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarButton x:Name="ForwardTenButton" Click="SeekForward_Click"
                                 ToolTipService.ToolTip="Forward 10 seconds"
                                 AutomationProperties.Name="Forward 10 seconds">
-                            <FontIcon Glyph="&#xE14A;" FontSize="15" />
-                        </Button>
-                        <Button x:Name="NextButton" Click="Next_Click" Width="40" Height="40"
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Forward" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarButton x:Name="NextButton" Click="Next_Click"
                                 ToolTipService.ToolTip="Next video"
                                 AutomationProperties.Name="Next video">
-                            <FontIcon Glyph="&#xE101;" FontSize="15" />
-                        </Button>
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Next" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
                                 HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <ToggleButton x:Name="RepeatButton" Click="Repeat_Click" Width="40" Height="40"
+                        <AppBarToggleButton x:Name="RepeatButton" Click="Repeat_Click"
                                       ToolTipService.ToolTip="Repeat the current video"
                                       AutomationProperties.Name="Repeat current video">
-                            <FontIcon Glyph="&#xE8EE;" FontSize="15" />
-                        </ToggleButton>
+                            <AppBarToggleButton.Icon>
+                                <SymbolIcon Symbol="RepeatOne" />
+                            </AppBarToggleButton.Icon>
+                        </AppBarToggleButton>
                         <ComboBox x:Name="SpeedPicker" Width="84" SelectedIndex="2"
                                   ToolTipService.ToolTip="Playback speed"
                                   AutomationProperties.Name="Playback speed"
@@ -215,21 +233,25 @@
                             <ComboBoxItem Content="1.5×" />
                             <ComboBoxItem Content="2×" />
                         </ComboBox>
-                        <ToggleButton x:Name="MuteButton" Click="Mute_Click" Width="40" Height="40"
+                        <AppBarToggleButton x:Name="MuteButton" Click="Mute_Click"
                                       ToolTipService.ToolTip="Mute"
                                       AutomationProperties.Name="Mute">
-                            <FontIcon Glyph="&#xE767;" FontSize="16" />
-                        </ToggleButton>
+                            <AppBarToggleButton.Icon>
+                                <SymbolIcon Symbol="Volume" />
+                            </AppBarToggleButton.Icon>
+                        </AppBarToggleButton>
                         <Slider x:Name="VolumeSlider" Width="96" Minimum="0" Maximum="100"
                                 Value="70" ValueChanged="VolumeSlider_ValueChanged"
                                 VerticalAlignment="Center"
                                 ToolTipService.ToolTip="Volume"
                                 AutomationProperties.Name="Volume" />
-                        <Button x:Name="FullWindowButton" Click="FullWindow_Click" Width="40" Height="40"
+                        <AppBarButton x:Name="FullWindowButton" Click="FullWindow_Click"
                                 ToolTipService.ToolTip="Toggle full-screen video"
                                 AutomationProperties.Name="Full screen">
-                            <FontIcon Glyph="&#xE740;" FontSize="15" />
-                        </Button>
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="FullScreen" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
                     </StackPanel>
                 </Grid>
             </Grid>
