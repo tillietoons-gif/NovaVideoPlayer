@@ -4,6 +4,10 @@
 #include <winrt/Microsoft.UI.Xaml.h>
 #include <winrt/Windows.Media.Core.h>
 #include <winrt/Windows.Media.Playback.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
 #include <random>
 #include <vector>
 
@@ -58,6 +62,9 @@ namespace winrt::App1::implementation
         bool m_updatingSubtitlePicker{ false };
         bool m_compactMode{ false };
         bool m_shuffleEnabled{ false };
+        bool m_isFullScreen{ false };
+        LONG_PTR m_windowedStyle{};
+        WINDOWPLACEMENT m_windowedPlacement{ sizeof(WINDOWPLACEMENT) };
         std::mt19937 m_random{ std::random_device{}() };
 
         void PlayIndex(size_t index);

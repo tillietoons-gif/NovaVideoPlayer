@@ -20,6 +20,7 @@
 #include <winrt/Microsoft.UI.Xaml.Automation.h>
 #include <winrt/Windows.System.h>
 #include <winrt/Windows.Storage.h>
+#include <microsoft.ui.xaml.window.h>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -549,10 +550,107 @@ namespace winrt::App1::implementation
 
     void MainWindow::FullWindow_Click(IInspectable const&, RoutedEventArgs const&)
     {
-        auto fullWindow = !this->VideoPlayer().IsFullWindow();
-        this->VideoPlayer().IsFullWindow(fullWindow);
-        this->FullWindowButton().Icon(SymbolIcon(fullWindow ? Symbol::BackToWindow : Symbol::FullScreen));
-        AutomationProperties::SetName(this->FullWindowButton(), fullWindow ? L"Exit full screen" : L"Full screen");
+        auto windowNative = this->try_as<IWindowNative>();
+        if (!windowNative)
+        {
+            this->StatusText().Text(L"Could not access the application window");
+            return;
+        }
+
+        HWND windowHandle{};
+        auto result = windowNative->get_WindowHandle(&windowHandle);
+        if (FAILED(result))
+        {
+            this->StatusText().Text(L"Could not access the application window (error " +
+                to_hstring(static_cast<uint32_t>(result)) + L")");
+            return;
+        }
+
+        if (!m_isFullScreen)
+        {
+            m_windowedStyle = GetWindowLongPtrW(windowHandle, GWL_STYLE);
+            m_windowedPlacement.length = sizeof(WINDOWPLACEMENT);
+            if (!GetWindowPlacement(windowHandle, &m_windowedPlacement))
+            {
+                this->StatusText().Text(L"Could not save the window position (error " +
+                    to_hstring(static_cast<uint32_t>(GetLastError())) + L")");
+                return;
+            }
+
+            MONITORINFO monitorInfo{ sizeof(MONITORINFO) };
+            auto monitor = MonitorFromWindow(windowHandle, MONITOR_DEFAULTTONEAREST);
+            if (!GetMonitorInfoW(monitor, &monitorInfo))
+            {
+                this->StatusText().Text(L"Could not find the display for full screen (error " +
+                    to_hstring(static_cast<uint32_t>(GetLastError())) + L")");
+                return;
+            }
+
+            SetLastError(ERROR_SUCCESS);
+            auto previousStyle = SetWindowLongPtrW(windowHandle, GWL_STYLE,
+                m_windowedStyle & ~static_cast<LONG_PTR>(WS_OVERLAPPEDWINDOW));
+            if (previousStyle == 0 && GetLastError() != ERROR_SUCCESS)
+            {
+                this->StatusText().Text(L"Could not enter full screen (error " +
+                    to_hstring(static_cast<uint32_t>(GetLastError())) + L")");
+                return;
+            }
+
+            if (!SetWindowPos(windowHandle, HWND_TOP,
+                monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
+                monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
+                monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+                SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOOWNERZORDER))
+            {
+                auto error = GetLastError();
+                SetWindowLongPtrW(windowHandle, GWL_STYLE, m_windowedStyle);
+                SetWindowPlacement(windowHandle, &m_windowedPlacement);
+                this->StatusText().Text(L"Could not enter full screen (error " +
+                    to_hstring(static_cast<uint32_t>(error)) + L")");
+                return;
+            }
+
+            m_isFullScreen = true;
+            this->RootGrid().Padding(Thickness{ 0, 0, 0, 0 });
+            this->HeaderPanel().Visibility(Visibility::Collapsed);
+            this->QueuePanel().Visibility(Visibility::Collapsed);
+            this->QueueColumn().Width(GridLength{ 0.0 });
+            this->VideoSurface().Margin(Thickness{ 0 });
+        }
+        else
+        {
+            SetLastError(ERROR_SUCCESS);
+            auto previousStyle = SetWindowLongPtrW(windowHandle, GWL_STYLE, m_windowedStyle);
+            if (previousStyle == 0 && GetLastError() != ERROR_SUCCESS)
+            {
+                this->StatusText().Text(L"Could not restore the window (error " +
+                    to_hstring(static_cast<uint32_t>(GetLastError())) + L")");
+                return;
+            }
+
+            if (!SetWindowPlacement(windowHandle, &m_windowedPlacement) ||
+                !SetWindowPos(windowHandle, nullptr, 0, 0, 0, 0,
+                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER |
+                    SWP_FRAMECHANGED | SWP_NOACTIVATE))
+            {
+                this->StatusText().Text(L"Could not restore the window (error " +
+                    to_hstring(static_cast<uint32_t>(GetLastError())) + L")");
+                return;
+            }
+
+            m_isFullScreen = false;
+            this->RootGrid().Padding(Thickness{ 20, 20, 20, 20 });
+            this->HeaderPanel().Visibility(Visibility::Visible);
+            this->QueuePanel().Visibility(m_compactMode ? Visibility::Collapsed : Visibility::Visible);
+            this->QueueColumn().Width(GridLength{ m_compactMode ? 0.0 : 280.0,
+                Microsoft::UI::Xaml::GridUnitType::Pixel });
+            this->VideoSurface().Margin(Thickness{ 0, 0, 18, 18 });
+        }
+
+        this->FullWindowButton().Icon(SymbolIcon(
+            m_isFullScreen ? Symbol::BackToWindow : Symbol::FullScreen));
+        AutomationProperties::SetName(this->FullWindowButton(),
+            m_isFullScreen ? L"Exit full screen" : L"Full screen");
     }
 
     void MainWindow::Mute_Click(IInspectable const&, RoutedEventArgs const&)

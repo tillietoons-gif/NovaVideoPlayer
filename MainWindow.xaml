@@ -22,54 +22,65 @@
             <ColumnDefinition x:Name="QueueColumn" Width="280" />
         </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <Border Width="40" Height="40" CornerRadius="12" Background="#7054d8">
-                    <SymbolIcon Symbol="Video" Foreground="White"
-                                HorizontalAlignment="Center" VerticalAlignment="Center" />
-                </Border>
-                <StackPanel Spacing="1">
-                    <TextBlock Text="Aster Player" FontSize="19" FontWeight="SemiBold"
-                               Foreground="#172033" />
-                    <TextBlock Text="Your library, ready to play" FontSize="12"
-                               Foreground="#68748a" />
+        <Border x:Name="HeaderPanel" Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,20" Padding="16,8"
+                CornerRadius="16" BorderBrush="#80FFFFFF" BorderThickness="1">
+            <Border.Background>
+                <AcrylicBrush TintColor="#F7F8FF" TintOpacity="0.76"
+                              FallbackColor="#F2F4FA" />
+            </Border.Background>
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Border Width="40" Height="40" CornerRadius="12" Background="#7054d8">
+                        <SymbolIcon Symbol="Video" Foreground="White"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Spacing="1" VerticalAlignment="Center">
+                        <TextBlock Text="Aster Player" FontSize="19" FontWeight="SemiBold"
+                                   Foreground="#172033" />
+                        <TextBlock Text="Your library, ready to play" FontSize="12"
+                                   Foreground="#68748a" />
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
-            <ScrollViewer Grid.Column="1" HorizontalScrollMode="Enabled"
-                          HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled"
-                          VerticalScrollBarVisibility="Hidden" MaxWidth="520">
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <AppBarToggleButton x:Name="CompactModeButton" Click="CompactMode_Click"
-                                        IsChecked="False"
-                                        ToolTipService.ToolTip="Hide or show the play queue"
-                                        AutomationProperties.Name="Toggle compact mode">
-                        <AppBarToggleButton.Icon>
-                            <SymbolIcon Symbol="ViewAll" />
-                        </AppBarToggleButton.Icon>
-                    </AppBarToggleButton>
-                    <AppBarButton x:Name="OpenVideoButton" Click="OpenVideo_Click"
-                                  ToolTipService.ToolTip="Choose video or audio files"
-                                  AutomationProperties.Name="Open media">
-                        <AppBarButton.Icon>
-                            <SymbolIcon Symbol="OpenFile" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarButton x:Name="OpenStreamButton" Click="OpenStream_Click"
-                                  ToolTipService.ToolTip="Open a network stream"
-                                  AutomationProperties.Name="Open network stream">
-                        <AppBarButton.Icon>
-                            <SymbolIcon Symbol="World" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                </StackPanel>
-            </ScrollViewer>
-        </Grid>
+                <ScrollViewer Grid.Column="1" HorizontalScrollMode="Enabled"
+                              HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled"
+                              VerticalScrollBarVisibility="Hidden" MaxWidth="520"
+                              VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <AppBarToggleButton x:Name="CompactModeButton" Click="CompactMode_Click"
+                                            IsChecked="False"
+                                            ToolTipService.ToolTip="Hide or show the play queue"
+                                            AutomationProperties.Name="Toggle compact mode"
+                                            VerticalAlignment="Center">
+                            <AppBarToggleButton.Icon>
+                                <SymbolIcon Symbol="ViewAll" />
+                            </AppBarToggleButton.Icon>
+                        </AppBarToggleButton>
+                        <AppBarButton x:Name="OpenVideoButton" Click="OpenVideo_Click"
+                                      ToolTipService.ToolTip="Choose video or audio files"
+                                      AutomationProperties.Name="Open media"
+                                      VerticalAlignment="Center">
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="OpenFile" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarButton x:Name="OpenStreamButton" Click="OpenStream_Click"
+                                      ToolTipService.ToolTip="Open a network stream"
+                                      AutomationProperties.Name="Open network stream"
+                                      VerticalAlignment="Center">
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="World" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
 
-        <Border Grid.Row="1" Grid.Column="0" Margin="0,0,18,18" CornerRadius="18"
+        <Border x:Name="VideoSurface" Grid.Row="1" Grid.Column="0" Margin="0,0,18,18" CornerRadius="18"
                 Background="#e9edf5" BorderBrush="#d9dfeb" BorderThickness="1">
             <Grid>
                 <Grid.Background>
@@ -128,7 +139,7 @@
                                        VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
                                        Foreground="#344054" />
                         </Grid>
-                        <Grid Grid.Row="1" ColumnSpacing="10">
+                        <Grid Grid.Row="1" ColumnSpacing="10" VerticalAlignment="Center">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="150" />
                                 <ColumnDefinition Width="Auto" />
@@ -148,7 +159,7 @@
                                            ToolTipService.ToolTip="Space: play/pause · arrows: seek/volume · M: mute · F: fullscreen" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="0"
-                                        VerticalAlignment="Center">
+                                        VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <AppBarButton x:Name="PreviousButton" Click="Previous_Click"
                                               ToolTipService.ToolTip="Previous video (or restart current)"
                                               AutomationProperties.Name="Previous video">
@@ -282,7 +293,8 @@
                             </AppBarButton>
                             <AppBarButton x:Name="FullWindowButton" Grid.Column="4" Click="FullWindow_Click"
                                           ToolTipService.ToolTip="Toggle full-screen video"
-                                          AutomationProperties.Name="Full screen">
+                                          AutomationProperties.Name="Full screen"
+                                          VerticalAlignment="Center">
                                 <AppBarButton.Icon>
                                     <SymbolIcon Symbol="FullScreen" />
                                 </AppBarButton.Icon>
