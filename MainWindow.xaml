@@ -16,7 +16,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -99,6 +98,176 @@
                                FontSize="13" Foreground="#657188" HorizontalAlignment="Center"
                                TextAlignment="Center" TextWrapping="WrapWholeWords" />
                 </StackPanel>
+                <Border VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
+                        Margin="20" Padding="16,12" CornerRadius="16" BorderThickness="1"
+                        BorderBrush="#80FFFFFF" IsTabStop="False">
+                    <Border.Background>
+                        <AcrylicBrush TintColor="#F7F8FF" TintOpacity="0.78"
+                                      FallbackColor="#F2F4FA" />
+                    </Border.Background>
+                    <Border.Shadow>
+                        <ThemeShadow />
+                    </Border.Shadow>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" ColumnSpacing="12" Margin="2,0,2,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="CurrentTimeText" Text="00:00" VerticalAlignment="Center"
+                                       FontSize="12" FontFamily="Consolas" Foreground="#344054" />
+                            <Slider Grid.Column="1" x:Name="SeekSlider" Minimum="0" Maximum="1" Value="0"
+                                    ValueChanged="SeekSlider_ValueChanged" VerticalAlignment="Center"
+                                    IsEnabled="False" />
+                            <TextBlock Grid.Column="2" x:Name="DurationText" Text="00:00"
+                                       VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
+                                       Foreground="#344054" />
+                        </Grid>
+                        <Grid Grid.Row="1" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ScrollViewer HorizontalScrollMode="Enabled"
+                                          HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollMode="Disabled"
+                                          VerticalScrollBarVisibility="Disabled">
+                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                            VerticalAlignment="Center">
+                                    <StackPanel Spacing="3" VerticalAlignment="Center" MaxWidth="180"
+                                                Margin="0,0,8,0">
+                                        <TextBlock Text="NOW PLAYING" FontSize="10" CharacterSpacing="100"
+                                                   Foreground="#68748a" />
+                                        <TextBlock x:Name="NowPlayingText" Text="Choose a video"
+                                                   FontSize="13" FontWeight="SemiBold" Foreground="#202a3e"
+                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                        <TextBlock x:Name="StatusText" Text="Ready when you are"
+                                                   FontSize="10" Foreground="#68748a"
+                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                                   ToolTipService.ToolTip="Space: play/pause · arrows: seek/volume · M: mute · F: fullscreen" />
+                                    </StackPanel>
+                                    <AppBarButton x:Name="PreviousButton" Click="Previous_Click"
+                                                  ToolTipService.ToolTip="Previous video (or restart current)"
+                                                  AutomationProperties.Name="Previous video">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="Previous" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
+                                    <AppBarButton x:Name="BackTenButton" Click="SeekBackward_Click"
+                                                  ToolTipService.ToolTip="Back 10 seconds"
+                                                  AutomationProperties.Name="Back 10 seconds">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="Back" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
+                                    <AppBarButton x:Name="PlayPauseButton" Click="PlayPause_Click"
+                                                  ToolTipService.ToolTip="Play"
+                                                  AutomationProperties.Name="Play">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="Play" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
+                                    <AppBarButton x:Name="StopButton" Click="Stop_Click"
+                                                  ToolTipService.ToolTip="Stop"
+                                                  AutomationProperties.Name="Stop">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="Stop" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
+                                    <AppBarButton x:Name="ForwardTenButton" Click="SeekForward_Click"
+                                                  ToolTipService.ToolTip="Forward 10 seconds"
+                                                  AutomationProperties.Name="Forward 10 seconds">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="Forward" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
+                                    <AppBarButton x:Name="NextButton" Click="Next_Click"
+                                                  ToolTipService.ToolTip="Next video"
+                                                  AutomationProperties.Name="Next video">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="Next" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
+                                    <Border Background="#BFFFFFFF" CornerRadius="10" Padding="4,2"
+                                            BorderBrush="#70FFFFFF" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                                    VerticalAlignment="Center">
+                                            <TextBlock Text="Speed" FontSize="10" Foreground="#68748a"
+                                                       VerticalAlignment="Center" />
+                                            <ComboBox x:Name="SpeedPicker" Width="84" SelectedIndex="2"
+                                                      ToolTipService.ToolTip="Playback speed"
+                                                      AutomationProperties.Name="Playback speed"
+                                                      SelectionChanged="SpeedPicker_SelectionChanged">
+                                                <ComboBoxItem Content="0.5×" />
+                                                <ComboBoxItem Content="0.75×" />
+                                                <ComboBoxItem Content="1×" />
+                                                <ComboBoxItem Content="1.25×" />
+                                                <ComboBoxItem Content="1.5×" />
+                                                <ComboBoxItem Content="2×" />
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Border>
+                                    <AppBarToggleButton x:Name="ShuffleButton" Click="Shuffle_Click"
+                                                        ToolTipService.ToolTip="Shuffle queue"
+                                                        AutomationProperties.Name="Shuffle queue">
+                                        <AppBarToggleButton.Icon>
+                                            <SymbolIcon Symbol="Shuffle" />
+                                        </AppBarToggleButton.Icon>
+                                    </AppBarToggleButton>
+                                    <AppBarToggleButton x:Name="RepeatButton" Click="Repeat_Click"
+                                                        ToolTipService.ToolTip="Repeat the current video"
+                                                        AutomationProperties.Name="Repeat current video">
+                                        <AppBarToggleButton.Icon>
+                                            <SymbolIcon Symbol="RepeatOne" />
+                                        </AppBarToggleButton.Icon>
+                                    </AppBarToggleButton>
+                                    <AppBarToggleButton x:Name="MuteButton" Click="Mute_Click"
+                                                        ToolTipService.ToolTip="Mute"
+                                                        AutomationProperties.Name="Mute">
+                                        <AppBarToggleButton.Icon>
+                                            <SymbolIcon Symbol="Volume" />
+                                        </AppBarToggleButton.Icon>
+                                    </AppBarToggleButton>
+                                    <Slider x:Name="VolumeSlider" Width="96" Minimum="0" Maximum="100"
+                                            Value="70" ValueChanged="VolumeSlider_ValueChanged"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.ToolTip="Volume"
+                                            AutomationProperties.Name="Volume" />
+                                    <AppBarButton x:Name="OpenSubtitleButton" Click="OpenSubtitle_Click"
+                                                  ToolTipService.ToolTip="Load an external subtitle file"
+                                                  AutomationProperties.Name="Load subtitles">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="Caption" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
+                                    <ComboBox x:Name="SubtitlePicker" Width="112" SelectedIndex="0"
+                                              ToolTipService.ToolTip="Subtitle track"
+                                              AutomationProperties.Name="Subtitle track"
+                                              SelectionChanged="SubtitlePicker_SelectionChanged">
+                                        <ComboBoxItem Content="Subtitles off" />
+                                    </ComboBox>
+                                    <Slider x:Name="AudioBalanceSlider" Width="72" Minimum="-100" Maximum="100"
+                                            Value="0" ValueChanged="AudioBalanceSlider_ValueChanged"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.ToolTip="Stereo balance: left to right"
+                                            AutomationProperties.Name="Stereo balance" />
+                                </StackPanel>
+                            </ScrollViewer>
+                            <AppBarButton x:Name="FullWindowButton" Grid.Column="1" Click="FullWindow_Click"
+                                          ToolTipService.ToolTip="Toggle full-screen video"
+                                          AutomationProperties.Name="Full screen">
+                                <AppBarButton.Icon>
+                                    <SymbolIcon Symbol="FullScreen" />
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                        </Grid>
+                    </Grid>
+                </Border>
                 <Border x:Name="DropOverlay" Visibility="Collapsed" Background="#EAF0FB"
                         BorderBrush="#8067df" BorderThickness="2" CornerRadius="18"
                         IsHitTestVisible="False">
@@ -201,165 +370,5 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="2" Grid.ColumnSpan="2" Padding="20,16" CornerRadius="18"
-                Background="#ffffff" BorderBrush="#dfe4ee" BorderThickness="1">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid Grid.Row="0" ColumnSpacing="14">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="CurrentTimeText" Text="00:00" VerticalAlignment="Center"
-                               FontSize="12" FontFamily="Consolas" Foreground="#58657c" />
-                    <Slider Grid.Column="1" x:Name="SeekSlider" Minimum="0" Maximum="1" Value="0"
-                            ValueChanged="SeekSlider_ValueChanged" VerticalAlignment="Center"
-                            IsEnabled="False" />
-                    <TextBlock Grid.Column="2" x:Name="DurationText" Text="00:00"
-                               VerticalAlignment="Center" FontSize="12" FontFamily="Consolas"
-                               Foreground="#58657c" />
-                </Grid>
-
-                <Grid Grid.Row="1" Margin="0,12,0,0" ColumnSpacing="16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Spacing="4" VerticalAlignment="Center" MaxWidth="420">
-                        <TextBlock Text="NOW PLAYING" FontSize="10" CharacterSpacing="100"
-                                   Foreground="#68748a" />
-                        <TextBlock x:Name="NowPlayingText" Text="Choose a video"
-                                   FontSize="13" FontWeight="SemiBold" Foreground="#202a3e"
-                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
-                        <TextBlock x:Name="StatusText" Text="Ready when you are"
-                                   FontSize="10" Foreground="#68748a"
-                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
-                                   ToolTipService.ToolTip="Space: play/pause · arrows: seek/volume · M: mute · F: fullscreen" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
-                                VerticalAlignment="Center">
-                        <AppBarButton x:Name="PreviousButton" Click="Previous_Click"
-                                ToolTipService.ToolTip="Previous video (or restart current)"
-                                AutomationProperties.Name="Previous video">
-                            <AppBarButton.Icon>
-                                <SymbolIcon Symbol="Previous" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                        <AppBarButton x:Name="BackTenButton" Click="SeekBackward_Click"
-                                ToolTipService.ToolTip="Back 10 seconds"
-                                AutomationProperties.Name="Back 10 seconds">
-                            <AppBarButton.Icon>
-                                <SymbolIcon Symbol="Back" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                        <AppBarButton x:Name="PlayPauseButton" Click="PlayPause_Click"
-                                ToolTipService.ToolTip="Play"
-                                AutomationProperties.Name="Play">
-                            <AppBarButton.Icon>
-                                <SymbolIcon Symbol="Play" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                        <AppBarButton x:Name="StopButton" Click="Stop_Click"
-                                ToolTipService.ToolTip="Stop"
-                                AutomationProperties.Name="Stop">
-                            <AppBarButton.Icon>
-                                <SymbolIcon Symbol="Stop" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                        <AppBarButton x:Name="ForwardTenButton" Click="SeekForward_Click"
-                                ToolTipService.ToolTip="Forward 10 seconds"
-                                AutomationProperties.Name="Forward 10 seconds">
-                            <AppBarButton.Icon>
-                                <SymbolIcon Symbol="Forward" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                        <AppBarButton x:Name="NextButton" Click="Next_Click"
-                                ToolTipService.ToolTip="Next video"
-                                AutomationProperties.Name="Next video">
-                            <AppBarButton.Icon>
-                                <SymbolIcon Symbol="Next" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
-                                HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Border Background="#f3f5fa" CornerRadius="10" Padding="4,2" BorderBrush="#dfe4ee" BorderThickness="1">
-                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="Speed" FontSize="10" Foreground="#68748a" VerticalAlignment="Center" />
-                                <ComboBox x:Name="SpeedPicker" Width="84" SelectedIndex="2"
-                                          ToolTipService.ToolTip="Playback speed"
-                                          AutomationProperties.Name="Playback speed"
-                                          SelectionChanged="SpeedPicker_SelectionChanged">
-                                    <ComboBoxItem Content="0.5×" />
-                                    <ComboBoxItem Content="0.75×" />
-                                    <ComboBoxItem Content="1×" />
-                                    <ComboBoxItem Content="1.25×" />
-                                    <ComboBoxItem Content="1.5×" />
-                                    <ComboBoxItem Content="2×" />
-                                </ComboBox>
-                            </StackPanel>
-                        </Border>
-                        <AppBarToggleButton x:Name="ShuffleButton" Click="Shuffle_Click"
-                                            ToolTipService.ToolTip="Shuffle queue"
-                                            AutomationProperties.Name="Shuffle queue">
-                            <AppBarToggleButton.Icon>
-                                <SymbolIcon Symbol="Shuffle" />
-                            </AppBarToggleButton.Icon>
-                        </AppBarToggleButton>
-                        <AppBarToggleButton x:Name="RepeatButton" Click="Repeat_Click"
-                                      ToolTipService.ToolTip="Repeat the current video"
-                                      AutomationProperties.Name="Repeat current video">
-                            <AppBarToggleButton.Icon>
-                                <SymbolIcon Symbol="RepeatOne" />
-                            </AppBarToggleButton.Icon>
-                        </AppBarToggleButton>
-                        <AppBarToggleButton x:Name="MuteButton" Click="Mute_Click"
-                                      ToolTipService.ToolTip="Mute"
-                                      AutomationProperties.Name="Mute">
-                            <AppBarToggleButton.Icon>
-                                <SymbolIcon Symbol="Volume" />
-                            </AppBarToggleButton.Icon>
-                        </AppBarToggleButton>
-                        <Slider x:Name="VolumeSlider" Width="96" Minimum="0" Maximum="100"
-                                Value="70" ValueChanged="VolumeSlider_ValueChanged"
-                                VerticalAlignment="Center"
-                                ToolTipService.ToolTip="Volume"
-                                AutomationProperties.Name="Volume" />
-                        <AppBarButton x:Name="OpenSubtitleButton" Click="OpenSubtitle_Click"
-                                      ToolTipService.ToolTip="Load an external subtitle file"
-                                      AutomationProperties.Name="Load subtitles">
-                            <AppBarButton.Icon>
-                                <SymbolIcon Symbol="Caption" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                        <ComboBox x:Name="SubtitlePicker" Width="112" SelectedIndex="0"
-                                  ToolTipService.ToolTip="Subtitle track"
-                                  AutomationProperties.Name="Subtitle track"
-                                  SelectionChanged="SubtitlePicker_SelectionChanged">
-                            <ComboBoxItem Content="Subtitles off" />
-                        </ComboBox>
-                        <Slider x:Name="AudioBalanceSlider" Width="72" Minimum="-100" Maximum="100"
-                                Value="0" ValueChanged="AudioBalanceSlider_ValueChanged"
-                                VerticalAlignment="Center"
-                                ToolTipService.ToolTip="Stereo balance: left to right"
-                                AutomationProperties.Name="Stereo balance" />
-                        <AppBarButton x:Name="FullWindowButton" Click="FullWindow_Click"
-                                ToolTipService.ToolTip="Toggle full-screen video"
-                                AutomationProperties.Name="Full screen">
-                            <AppBarButton.Icon>
-                                <SymbolIcon Symbol="FullScreen" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                    </StackPanel>
-                </Grid>
-            </Grid>
-        </Border>
     </Grid>
 </Window>
