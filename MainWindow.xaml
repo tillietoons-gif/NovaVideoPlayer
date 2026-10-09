@@ -54,6 +54,13 @@
                         <SymbolIcon Symbol="OpenFile" />
                     </AppBarButton.Icon>
                 </AppBarButton>
+                <AppBarButton x:Name="OpenStreamButton" Click="OpenStream_Click"
+                              ToolTipService.ToolTip="Open a network stream"
+                              AutomationProperties.Name="Open network stream">
+                    <AppBarButton.Icon>
+                        <SymbolIcon Symbol="World" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
             </StackPanel>
         </Grid>
 
@@ -105,7 +112,6 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid Margin="0,0,0,14">
                     <Grid.ColumnDefinitions>
@@ -118,14 +124,22 @@
                         <TextBlock x:Name="QueueCountText" Text="0 videos"
                                    FontSize="12" Foreground="#8993a6" />
                     </StackPanel>
-                    <AppBarButton Grid.Column="1" x:Name="ClearQueueButton" Click="ClearQueue_Click"
-                            IsEnabled="False" VerticalAlignment="Center"
-                            ToolTipService.ToolTip="Remove all videos from the queue"
-                            AutomationProperties.Name="Clear queue">
-                        <AppBarButton.Icon>
-                            <SymbolIcon Symbol="Delete" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="0">
+                        <AppBarButton x:Name="RemoveQueueItemButton" Click="RemoveQueueItem_Click"
+                                      IsEnabled="False" ToolTipService.ToolTip="Remove selected item"
+                                      AutomationProperties.Name="Remove selected item">
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Remove" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarButton x:Name="ClearQueueButton" Click="ClearQueue_Click"
+                                      IsEnabled="False" ToolTipService.ToolTip="Clear the play queue"
+                                      AutomationProperties.Name="Clear queue">
+                            <AppBarButton.Icon>
+                                <SymbolIcon Symbol="Delete" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                    </StackPanel>
                 </Grid>
                 <Grid Grid.Row="1">
                     <ListView x:Name="PlaylistView" SelectionChanged="Playlist_SelectionChanged"
@@ -208,7 +222,7 @@
                         <TextBlock x:Name="StatusText" Text="Ready when you are"
                                    FontSize="10" Foreground="#8993a6"
                                    TextTrimming="CharacterEllipsis"
-                                   ToolTipService.ToolTip="Shortcuts: Space play/pause · Left/Right seek · Up/Down volume · M mute · F full screen" />
+                                   ToolTipService.ToolTip="Space: play/pause · arrows: seek/volume · M: mute · F: fullscreen" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"

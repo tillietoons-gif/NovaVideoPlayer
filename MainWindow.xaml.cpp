@@ -8,13 +8,17 @@
 #include <chrono>
 #include <commdlg.h>
 #include <cwctype>
+#include <cwctype>
 #include <cwchar>
 #include <iomanip>
+#include <fstream>
 #include <iterator>
 #include <sstream>
 #include <utility>
+#include <unordered_set>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 #include <winrt/Microsoft.UI.Xaml.Automation.h>
+#include <winrt/Windows.System.h>
 #include <winrt/Windows.Storage.h>
 
 using namespace winrt;
@@ -25,6 +29,7 @@ using namespace Microsoft::UI::Xaml::Automation;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Media::Playback;
+using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::ApplicationModel::DataTransfer;
 using namespace winrt::Windows::Storage;
 
@@ -87,6 +92,11 @@ namespace winrt::App1::implementation
 
     hstring MainWindow::NormalizeFilePathForUri(std::wstring const& sourcePath)
     {
+        if (sourcePath.starts_with(L"http://") || sourcePath.starts_with(L"https://"))
+        {
+            return hstring(sourcePath);
+        }
+
         std::wstring normalized = sourcePath;
         std::replace(normalized.begin(), normalized.end(), L'\\', L'/');
         return hstring(L"file:///" + normalized);
@@ -117,8 +127,8 @@ namespace winrt::App1::implementation
         openFileDialog.lpstrFile = selectedFiles.data();
         openFileDialog.nMaxFile = static_cast<DWORD>(selectedFiles.size());
         openFileDialog.lpstrFilter =
-            L"Media files (*.mp4;*.m4v;*.mov;*.wmv;*.avi;*.mkv;*.mpeg;*.mpg;*.3gp;*.asf;*.mp3;*.wav;*.wma;*.m4a;*.aac;*.flac)\0"
-            L"*.mp4;*.m4v;*.mov;*.wmv;*.avi;*.mkv;*.mpeg;*.mpg;*.3gp;*.asf;*.mp3;*.wav;*.wma;*.m4a;*.aac;*.flac\0"
+            L"Media and playlists (*.mp4;*.m4v;*.mov;*.wmv;*.avi;*.mkv;*.webm;*.flv;*.ts;*.m2ts;*.mpeg;*.mpg;*.3gp;*.asf;*.mp3;*.wav;*.wma;*.m4a;*.aac;*.flac;*.ogg;*.opus;*.aiff;*.m3u;*.m3u8)\0"
+            L"*.mp4;*.m4v;*.mov;*.wmv;*.avi;*.mkv;*.webm;*.flv;*.ts;*.m2ts;*.mpeg;*.mpg;*.3gp;*.asf;*.mp3;*.wav;*.wma;*.m4a;*.aac;*.flac;*.ogg;*.opus;*.aiff;*.m3u;*.m3u8\0"
             L"All files (*.*)\0*.*\0";
         openFileDialog.nFilterIndex = 1;
         openFileDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
@@ -158,14 +168,131 @@ namespace winrt::App1::implementation
         QueueMediaFiles(selectedPaths);
     }
 
+    fire_and_forget MainWindow::OpenStream_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        auto lifetime = get_strong();
+        ContentDialog dialog;
+        dialog.XamlRoot(this->RootGrid().XamlRoot());
+        dialog.Title(box_value(L"Open network stream"));
+        dialog.PrimaryButtonText(L"Play");
+        dialog.CloseButtonText(L"Cancel");
+        dialog.DefaultButton(ContentDialogButton::Primary);
+
+        TextBox address;
+        address.PlaceholderText(L"https://example.com/video.m3u8");
+        address.AcceptsReturn(false);
+        address.Header(box_value(L"Stream URL"));
+        dialog.Content(address);
+
+        if (co_await dialog.ShowAsync() != ContentDialogResult::Primary)
+        {
+            co_return;
+        }
+
+        auto url = address.Text();
+        if (!url.starts_with(L"http://") && !url.starts_with(L"https://"))
+        {
+            this->StatusText().Text(L"Enter a valid HTTP or HTTPS stream URL");
+            co_return;
+        }
+
+        QueueMediaFiles({ std::wstring(url) });
+    }
+
     void MainWindow::QueueMediaFiles(std::vector<std::wstring> const& paths)
     {
         auto const wasEmpty = m_playlist.empty();
         size_t addedCount = 0;
         size_t subtitleCount = 0;
         std::vector<std::wstring> subtitlePaths;
+        std::vector<std::wstring> mediaPaths;
+        std::unordered_set<std::wstring> seenPlaylists;
 
         for (auto const& path : paths)
+        {
+            if (path.starts_with(L"http://") || path.starts_with(L"https://"))
+            {
+                mediaPaths.push_back(path);
+                continue;
+            }
+
+            auto extensionStart = path.find_last_of(L'.');
+            std::wstring extension = extensionStart == std::wstring::npos ? L"" : path.substr(extensionStart);
+            std::transform(extension.begin(), extension.end(), extension.begin(),
+                [](wchar_t character) { return static_cast<wchar_t>(std::towlower(character)); });
+
+            if (extension != L".m3u" && extension != L".m3u8")
+            {
+                mediaPaths.push_back(path);
+                continue;
+            }
+
+            if (!seenPlaylists.insert(path).second)
+            {
+                continue;
+            }
+
+            std::ifstream playlist(path, std::ios::binary);
+            if (!playlist)
+            {
+                this->StatusText().Text(L"Could not read playlist: " + hstring(path));
+                continue;
+            }
+
+            std::string contents((std::istreambuf_iterator<char>(playlist)), std::istreambuf_iterator<char>());
+            if (contents.size() > 8 * 1024 * 1024)
+            {
+                this->StatusText().Text(L"Playlist is too large to open");
+                continue;
+            }
+
+            auto required = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                contents.data(), static_cast<int>(contents.size()), nullptr, 0);
+            if (required <= 0)
+            {
+                this->StatusText().Text(L"Playlist must be valid UTF-8");
+                continue;
+            }
+
+            std::wstring decoded(static_cast<size_t>(required), L'\0');
+            MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                contents.data(), static_cast<int>(contents.size()), decoded.data(), required);
+
+            auto directoryEnd = path.find_last_of(L"\\/");
+            auto playlistDirectory = directoryEnd == std::wstring::npos ? std::wstring{} : path.substr(0, directoryEnd + 1);
+            std::wistringstream lines(decoded);
+            std::wstring line;
+            while (std::getline(lines, line))
+            {
+                if (!line.empty() && line.back() == L'\r')
+                {
+                    line.pop_back();
+                }
+                if (!line.empty() && line.front() == L'\uFEFF')
+                {
+                    line.erase(line.begin());
+                }
+
+                auto first = line.find_first_not_of(L" \t");
+                auto last = line.find_last_not_of(L" \t");
+                if (first == std::wstring::npos || line[first] == L'#')
+                {
+                    continue;
+                }
+                line = line.substr(first, last - first + 1);
+                if (line.starts_with(L"http://") || line.starts_with(L"https://") ||
+                    (line.size() > 2 && line[1] == L':') || line.starts_with(L"\\\\"))
+                {
+                    mediaPaths.push_back(line);
+                }
+                else
+                {
+                    mediaPaths.push_back(playlistDirectory + line);
+                }
+            }
+        }
+
+        for (auto const& path : mediaPaths)
         {
             auto extensionStart = path.find_last_of(L'.');
             std::wstring extension = extensionStart == std::wstring::npos ? L"" : path.substr(extensionStart);
@@ -179,13 +306,17 @@ namespace winrt::App1::implementation
             }
 
             static constexpr wchar_t const* supportedExtensions[] = {
-                L".mp4", L".m4v", L".mov", L".wmv", L".avi", L".mkv",
+                L".mp4", L".m4v", L".mov", L".wmv", L".avi", L".mkv", L".webm", L".flv",
+                L".ts", L".m2ts", L".vob", L".ogv",
                 L".mpeg", L".mpg", L".3gp", L".asf", L".mp3", L".wav",
-                L".wma", L".m4a", L".aac", L".flac"
+                L".wma", L".m4a", L".aac", L".flac", L".ogg", L".opus", L".aiff", L".ac3"
             };
-            if (std::find_if(std::begin(supportedExtensions), std::end(supportedExtensions),
-                [&extension](wchar_t const* supported) { return extension == supported; }) ==
-                std::end(supportedExtensions))
+            auto const isNetworkStream =
+                path.starts_with(L"http://") || path.starts_with(L"https://");
+            if (!isNetworkStream &&
+                std::find_if(std::begin(supportedExtensions), std::end(supportedExtensions),
+                    [&extension](wchar_t const* supported) { return extension == supported; }) ==
+                    std::end(supportedExtensions))
             {
                 continue;
             }
@@ -200,6 +331,7 @@ namespace winrt::App1::implementation
         this->QueueCountText().Text(to_hstring(m_playlist.size()) +
             (m_playlist.size() == 1 ? L" item" : L" items"));
         this->ClearQueueButton().IsEnabled(!m_playlist.empty());
+        this->RemoveQueueItemButton().IsEnabled(!m_playlist.empty());
         this->QueueEmptyState().Visibility(m_playlist.empty() ? Visibility::Visible : Visibility::Collapsed);
         if (wasEmpty && !m_playlist.empty())
         {
@@ -460,6 +592,7 @@ namespace winrt::App1::implementation
 
         this->QueueCountText().Text(L"0 videos");
         this->ClearQueueButton().IsEnabled(false);
+        this->RemoveQueueItemButton().IsEnabled(false);
         this->QueueEmptyState().Visibility(Visibility::Visible);
         this->EmptyState().Visibility(Visibility::Visible);
         this->NowPlayingText().Text(L"Choose a video");
@@ -475,6 +608,52 @@ namespace winrt::App1::implementation
         this->SubtitlePicker().SelectedIndex(0);
         m_updatingSubtitlePicker = false;
         UpdatePlaybackState();
+    }
+
+    void MainWindow::RemoveQueueItem_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        auto selectedIndex = this->PlaylistView().SelectedIndex();
+        if (selectedIndex < 0 || static_cast<size_t>(selectedIndex) >= m_playlist.size())
+        {
+            return;
+        }
+
+        auto const removedIndex = static_cast<size_t>(selectedIndex);
+        auto const removedCurrent = removedIndex == m_currentIndex;
+        m_updatingPlaylistSelection = true;
+        m_playlist.erase(m_playlist.begin() + removedIndex);
+        m_playlistItems.RemoveAt(static_cast<uint32_t>(removedIndex));
+        m_updatingPlaylistSelection = false;
+
+        if (m_playlist.empty())
+        {
+            ClearQueue_Click(nullptr, RoutedEventArgs{ nullptr });
+            return;
+        }
+
+        this->QueueCountText().Text(to_hstring(m_playlist.size()) +
+            (m_playlist.size() == 1 ? L" item" : L" items"));
+        this->ClearQueueButton().IsEnabled(true);
+        this->RemoveQueueItemButton().IsEnabled(true);
+        this->QueueEmptyState().Visibility(Visibility::Collapsed);
+
+        if (removedCurrent)
+        {
+            auto nextIndex = std::min(removedIndex, m_playlist.size() - 1);
+            PlayIndex(nextIndex);
+            return;
+        }
+
+        if (removedIndex < m_currentIndex)
+        {
+            --m_currentIndex;
+        }
+
+        auto selectedAfterRemoval = std::min(m_currentIndex, m_playlist.size() - 1);
+        m_updatingPlaylistSelection = true;
+        this->PlaylistView().SelectedIndex(static_cast<int32_t>(selectedAfterRemoval));
+        m_updatingPlaylistSelection = false;
+        this->StatusText().Text(L"Removed from queue");
     }
 
     void MainWindow::OpenSubtitle_Click(IInspectable const&, RoutedEventArgs const&)

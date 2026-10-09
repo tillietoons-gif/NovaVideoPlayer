@@ -8,8 +8,9 @@ the platform; supported formats and codecs therefore depend on Windows and
 the codecs installed on the computer.
 
 Features:
-* Add multiple local video and audio files to a playback queue, or drag files
-  into the player. Shuffle, repeat, previous/next, and clear the queue.
+* Add multiple local video and audio files or UTF-8 M3U/M3U8 playlists to a
+  playback queue, open HTTP/HTTPS streams, or drag files into the player.
+  Shuffle, repeat, previous/next, remove selected, and clear the queue.
 * Play, pause, stop, seek, and jump forward/backward; use Space, arrow keys,
   M, and F for common playback, seek, volume, mute, and full-screen actions.
 * Adjust playback speed, volume, mute, and stereo balance.
