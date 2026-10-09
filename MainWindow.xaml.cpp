@@ -41,6 +41,7 @@ namespace winrt::App1::implementation
         this->VideoPlayer().SetMediaPlayer(m_mediaPlayer);
         this->PlaylistView().ItemsSource(m_playlistItems = single_threaded_observable_vector<hstring>());
         this->VolumeSlider().Value(70);
+        this->MuteButton().IsChecked(false);
 
         m_mediaPlayer.MediaFailed([this](MediaPlayer const&, MediaPlayerFailedEventArgs const& args)
         {
@@ -73,7 +74,6 @@ namespace winrt::App1::implementation
         this->StatusText().Text(L"Ready when you are");
         this->QueueCountText().Text(L"0 videos");
         this->NowPlayingText().Text(L"Choose a video");
-        this->MuteButton().Content(box_value(L"Mute"));
     }
 
     hstring MainWindow::NormalizeFilePathForUri(std::wstring const& sourcePath)
@@ -320,19 +320,20 @@ namespace winrt::App1::implementation
     {
         auto fullWindow = !this->VideoPlayer().IsFullWindow();
         this->VideoPlayer().IsFullWindow(fullWindow);
-        this->FullWindowButton().Content(box_value(fullWindow ? L"Exit full screen" : L"Full screen"));
+        this->FullWindowButton().Content().as<FontIcon>().Glyph(fullWindow ? L"\uE73F" : L"\uE740");
     }
 
     void MainWindow::Mute_Click(IInspectable const&, RoutedEventArgs const&)
     {
         m_mediaPlayer.IsMuted(!m_mediaPlayer.IsMuted());
-        this->MuteButton().Content(box_value(m_mediaPlayer.IsMuted() ? L"Unmute" : L"Mute"));
+        auto isMuted = m_mediaPlayer.IsMuted();
+        this->MuteButton().IsChecked(isMuted);
+        this->MuteButton().Content().as<FontIcon>().Glyph(isMuted ? L"\uE74F" : L"\uE767");
     }
 
     void MainWindow::Repeat_Click(IInspectable const&, RoutedEventArgs const&)
     {
         auto isRepeating = this->RepeatButton().IsChecked().Value();
-        this->RepeatButton().Content(box_value(isRepeating ? L"Repeat on" : L"Repeat off"));
         this->StatusText().Text(isRepeating ? L"Repeating current video" : L"Repeat off");
     }
 
@@ -403,7 +404,7 @@ namespace winrt::App1::implementation
     {
         auto isPlaying = m_mediaPlayer &&
             m_mediaPlayer.PlaybackSession().PlaybackState() == MediaPlaybackState::Playing;
-        this->PlayPauseButton().Content(box_value(isPlaying ? L"Pause" : L"Play"));
+        this->PlayPauseButton().Content().as<FontIcon>().Glyph(isPlaying ? L"\uE103" : L"\uE102");
     }
 
     void MainWindow::UpdateTimeline()

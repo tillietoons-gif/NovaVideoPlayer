@@ -38,8 +38,10 @@
                 </StackPanel>
             </StackPanel>
             <Button Grid.Column="1" x:Name="OpenVideoButton" Click="OpenVideo_Click"
-                    Content="＋   Open video" Height="40" MinWidth="132"
-                    ToolTipService.ToolTip="Choose one or more video files" />
+                    Height="40" Width="44" ToolTipService.ToolTip="Choose one or more video files"
+                    AutomationProperties.Name="Open video">
+                <FontIcon Glyph="&#xE8E5;" FontSize="17" />
+            </Button>
         </Grid>
 
         <Border Grid.Row="1" Grid.Column="0" Margin="0,0,18,18" CornerRadius="14"
@@ -82,8 +84,11 @@
                                    FontSize="12" Foreground="#8993a6" />
                     </StackPanel>
                     <Button Grid.Column="1" x:Name="ClearQueueButton" Click="ClearQueue_Click"
-                            Content="Clear" IsEnabled="False" VerticalAlignment="Center"
-                            ToolTipService.ToolTip="Remove all videos from the queue" />
+                            IsEnabled="False" VerticalAlignment="Center" Width="36" Height="36"
+                            ToolTipService.ToolTip="Remove all videos from the queue"
+                            AutomationProperties.Name="Clear queue">
+                        <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                    </Button>
                 </Grid>
                 <Grid Grid.Row="1">
                     <ListView x:Name="PlaylistView" SelectionChanged="Playlist_SelectionChanged"
@@ -160,25 +165,48 @@
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
                                 VerticalAlignment="Center">
-                        <Button x:Name="PreviousButton" Click="Previous_Click" Content="|◀"
-                                ToolTipService.ToolTip="Previous video (or restart current)" />
-                        <Button x:Name="BackTenButton" Click="SeekBackward_Click" Content="−10s"
-                                ToolTipService.ToolTip="Back 10 seconds" />
-                        <Button x:Name="PlayPauseButton" Click="PlayPause_Click" Content="Play"
-                                MinWidth="84" />
-                        <Button x:Name="StopButton" Click="Stop_Click" Content="Stop" />
-                        <Button x:Name="ForwardTenButton" Click="SeekForward_Click" Content="+10s"
-                                ToolTipService.ToolTip="Forward 10 seconds" />
-                        <Button x:Name="NextButton" Click="Next_Click" Content="▶|"
-                                ToolTipService.ToolTip="Next video" />
+                        <Button x:Name="PreviousButton" Click="Previous_Click" Width="40" Height="40"
+                                ToolTipService.ToolTip="Previous video (or restart current)"
+                                AutomationProperties.Name="Previous video">
+                            <FontIcon Glyph="&#xE100;" FontSize="15" />
+                        </Button>
+                        <Button x:Name="BackTenButton" Click="SeekBackward_Click" Width="40" Height="40"
+                                ToolTipService.ToolTip="Back 10 seconds"
+                                AutomationProperties.Name="Back 10 seconds">
+                            <FontIcon Glyph="&#xE149;" FontSize="15" />
+                        </Button>
+                        <Button x:Name="PlayPauseButton" Click="PlayPause_Click" Width="48" Height="40"
+                                Background="#7758e8" Foreground="White" ToolTipService.ToolTip="Play"
+                                AutomationProperties.Name="Play">
+                            <FontIcon Glyph="&#xE102;" FontSize="16" />
+                        </Button>
+                        <Button x:Name="StopButton" Click="Stop_Click" Width="40" Height="40"
+                                ToolTipService.ToolTip="Stop"
+                                AutomationProperties.Name="Stop">
+                            <FontIcon Glyph="&#xE15B;" FontSize="14" />
+                        </Button>
+                        <Button x:Name="ForwardTenButton" Click="SeekForward_Click" Width="40" Height="40"
+                                ToolTipService.ToolTip="Forward 10 seconds"
+                                AutomationProperties.Name="Forward 10 seconds">
+                            <FontIcon Glyph="&#xE14A;" FontSize="15" />
+                        </Button>
+                        <Button x:Name="NextButton" Click="Next_Click" Width="40" Height="40"
+                                ToolTipService.ToolTip="Next video"
+                                AutomationProperties.Name="Next video">
+                            <FontIcon Glyph="&#xE101;" FontSize="15" />
+                        </Button>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
                                 HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <ToggleButton x:Name="RepeatButton" Click="Repeat_Click" Content="Repeat off"
-                                      ToolTipService.ToolTip="Repeat the current video" />
+                        <ToggleButton x:Name="RepeatButton" Click="Repeat_Click" Width="40" Height="40"
+                                      ToolTipService.ToolTip="Repeat the current video"
+                                      AutomationProperties.Name="Repeat current video">
+                            <FontIcon Glyph="&#xE8EE;" FontSize="15" />
+                        </ToggleButton>
                         <ComboBox x:Name="SpeedPicker" Width="84" SelectedIndex="2"
                                   ToolTipService.ToolTip="Playback speed"
+                                  AutomationProperties.Name="Playback speed"
                                   SelectionChanged="SpeedPicker_SelectionChanged">
                             <ComboBoxItem Content="0.5×" />
                             <ComboBoxItem Content="0.75×" />
@@ -187,13 +215,21 @@
                             <ComboBoxItem Content="1.5×" />
                             <ComboBoxItem Content="2×" />
                         </ComboBox>
-                        <Button x:Name="MuteButton" Click="Mute_Click" Content="Mute" />
+                        <ToggleButton x:Name="MuteButton" Click="Mute_Click" Width="40" Height="40"
+                                      ToolTipService.ToolTip="Mute"
+                                      AutomationProperties.Name="Mute">
+                            <FontIcon Glyph="&#xE767;" FontSize="16" />
+                        </ToggleButton>
                         <Slider x:Name="VolumeSlider" Width="96" Minimum="0" Maximum="100"
                                 Value="70" ValueChanged="VolumeSlider_ValueChanged"
                                 VerticalAlignment="Center"
-                                ToolTipService.ToolTip="Volume" />
-                        <Button x:Name="FullWindowButton" Click="FullWindow_Click" Content="Full screen"
-                                ToolTipService.ToolTip="Toggle full-screen video" />
+                                ToolTipService.ToolTip="Volume"
+                                AutomationProperties.Name="Volume" />
+                        <Button x:Name="FullWindowButton" Click="FullWindow_Click" Width="40" Height="40"
+                                ToolTipService.ToolTip="Toggle full-screen video"
+                                AutomationProperties.Name="Full screen">
+                            <FontIcon Glyph="&#xE740;" FontSize="15" />
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Grid>
