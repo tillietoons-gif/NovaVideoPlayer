@@ -987,6 +987,11 @@ namespace winrt::App1::implementation
 
     void MainWindow::VolumeSlider_ValueChanged(IInspectable const&, RangeBaseValueChangedEventArgs const&)
     {
+        if (!this->VolumeSlider() || !this->VolumeText() || !this->MuteButton())
+        {
+            return;
+        }
+
         auto volumeVal = static_cast<int>(std::round(this->VolumeSlider().Value()));
         if (m_mediaPlayer)
         {
