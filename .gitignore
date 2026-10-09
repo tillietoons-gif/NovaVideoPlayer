@@ -13,3 +13,4 @@ packages/
 *.ilk
 *.obj
 *.tlog/
+Capture*.PNG

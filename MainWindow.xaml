@@ -9,85 +9,383 @@
     mc:Ignorable="d"
     Title="Aster Player">
 
-    <Grid x:Name="RootGrid" RequestedTheme="Light" Background="#f4f6fb" Padding="20" AllowDrop="True"
+    <Grid x:Name="RootGrid" RequestedTheme="Dark" Background="#0B0D13" Padding="16" AllowDrop="True"
           DragOver="RootGrid_DragOver" DragEnter="RootGrid_DragEnter"
           DragLeave="RootGrid_DragLeave" Drop="RootGrid_Drop"
           KeyDown="RootGrid_KeyDown" IsTabStop="True">
         <Grid.Resources>
             <!-- Brand accent theme for sliders and highlights -->
-            <SolidColorBrush x:Key="AccentColorBrush" Color="#7054D8" />
-            <SolidColorBrush x:Key="SliderTrackValueFill" Color="#7054D8" />
-            <SolidColorBrush x:Key="SliderTrackValueFillPointerOver" Color="#5C3FC5" />
-            <SolidColorBrush x:Key="SliderTrackValueFillPressed" Color="#4D33B2" />
-            <SolidColorBrush x:Key="SliderThumbBackground" Color="#7054D8" />
-            <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="#5C3FC5" />
-            <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="#4D33B2" />
+            <SolidColorBrush x:Key="AccentColorBrush" Color="#7C5CFC" />
+            <SolidColorBrush x:Key="SliderTrackValueFill" Color="#7C5CFC" />
+            <SolidColorBrush x:Key="SliderTrackValueFillPointerOver" Color="#906EFC" />
+            <SolidColorBrush x:Key="SliderTrackValueFillPressed" Color="#6D46FA" />
+            <SolidColorBrush x:Key="SliderThumbBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="#E2E8F0" />
+            <SolidColorBrush x:Key="SliderTrackFill" Color="#252A3D" />
+            <SolidColorBrush x:Key="SliderTrackFillPointerOver" Color="#30374E" />
+            <SolidColorBrush x:Key="SliderTrackFillPressed" Color="#30374E" />
 
-            <!-- Checked state brush overrides to prevent invisible white icon on light theme -->
-            <SolidColorBrush x:Key="AppBarToggleButtonBackgroundChecked" Color="#E8E4F8" />
-            <SolidColorBrush x:Key="AppBarToggleButtonBackgroundCheckedPointerOver" Color="#DDD5F8" />
-            <SolidColorBrush x:Key="AppBarToggleButtonBackgroundCheckedPressed" Color="#D0C4F4" />
-            <SolidColorBrush x:Key="AppBarToggleButtonForegroundChecked" Color="#7054D8" />
-            <SolidColorBrush x:Key="AppBarToggleButtonForegroundCheckedPointerOver" Color="#5B3FC2" />
-            <SolidColorBrush x:Key="AppBarToggleButtonForegroundCheckedPressed" Color="#492FAD" />
-            <SolidColorBrush x:Key="AppBarToggleButtonCheckGlyphForegroundChecked" Color="#7054D8" />
-            <SolidColorBrush x:Key="AppBarToggleButtonCheckGlyphForegroundCheckedPointerOver" Color="#5B3FC2" />
-            <SolidColorBrush x:Key="AppBarToggleButtonBorderBrushChecked" Color="#BDB0EF" />
+            <!-- Clean custom style for media transport AppBarButtons -->
+            <Style x:Key="MediaTransportButtonStyle" TargetType="AppBarButton">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="#94A3B8" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="MinWidth" Value="36" />
+                <Setter Property="MinHeight" Value="36" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="IsTabStop" Value="True" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="AppBarButton">
+                            <Border x:Name="RootBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    Width="{TemplateBinding Width}"
+                                    Height="{TemplateBinding Height}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="RootBorder.Background" Value="#252A3D" />
+                                                <Setter Target="IconPresenter.Foreground" Value="#FFFFFF" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="RootBorder.Background" Value="#1A1E2C" />
+                                                <Setter Target="IconPresenter.Foreground" Value="#7C5CFC" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="RootBorder.Opacity" Value="0.35" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <ContentPresenter x:Name="IconPresenter"
+                                                  Content="{TemplateBinding Icon}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Prominent circular Play/Pause button style -->
+            <Style x:Key="PrimaryPlayButtonStyle" TargetType="AppBarButton">
+                <Setter Property="Background" Value="#7C5CFC" />
+                <Setter Property="Foreground" Value="#FFFFFF" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Width" Value="48" />
+                <Setter Property="Height" Value="48" />
+                <Setter Property="MinWidth" Value="48" />
+                <Setter Property="MinHeight" Value="48" />
+                <Setter Property="CornerRadius" Value="24" />
+                <Setter Property="Margin" Value="6,0" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="IsTabStop" Value="True" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="AppBarButton">
+                            <Border x:Name="PlayRoot"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    Width="{TemplateBinding Width}"
+                                    Height="{TemplateBinding Height}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="PlayRoot.Background" Value="#8B6DFE" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="PlayRoot.Background" Value="#6945EA" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="PlayRoot.Opacity" Value="0.4" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <ContentPresenter Content="{TemplateBinding Icon}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Clean custom style for toggle AppBarButtons (Shuffle, Repeat, CompactMode) -->
+            <Style x:Key="MediaToggleButtonStyle" TargetType="AppBarToggleButton">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="#94A3B8" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="MinWidth" Value="36" />
+                <Setter Property="MinHeight" Value="36" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="IsTabStop" Value="True" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="AppBarToggleButton">
+                            <Border x:Name="ToggleBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    Width="{TemplateBinding Width}"
+                                    Height="{TemplateBinding Height}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="ToggleBorder.Background" Value="#252A3D" />
+                                                <Setter Target="ToggleIcon.Foreground" Value="#FFFFFF" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="ToggleBorder.Background" Value="#1A1E2C" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="ToggleBorder.Opacity" Value="0.35" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="CheckStates">
+                                        <VisualState x:Name="Unchecked" />
+                                        <VisualState x:Name="Checked">
+                                            <VisualState.Setters>
+                                                <Setter Target="ToggleBorder.Background" Value="#2B2150" />
+                                                <Setter Target="ToggleBorder.BorderBrush" Value="#7C5CFC" />
+                                                <Setter Target="ToggleBorder.BorderThickness" Value="1" />
+                                                <Setter Target="ToggleIcon.Foreground" Value="#A78BFA" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Indeterminate" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <ContentPresenter x:Name="ToggleIcon"
+                                                  Content="{TemplateBinding Icon}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Compact mute toggle button inside volume pill -->
+            <Style x:Key="MuteToggleButtonStyle" TargetType="AppBarToggleButton">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="#94A3B8" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Width" Value="32" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="MinWidth" Value="32" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="IsTabStop" Value="True" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="AppBarToggleButton">
+                            <Border x:Name="MuteBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    Width="{TemplateBinding Width}"
+                                    Height="{TemplateBinding Height}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="MuteBorder.Background" Value="#2D3349" />
+                                                <Setter Target="MuteIcon.Foreground" Value="#FFFFFF" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="MuteBorder.Background" Value="#1E2333" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="MuteBorder.Opacity" Value="0.4" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="CheckStates">
+                                        <VisualState x:Name="Unchecked" />
+                                        <VisualState x:Name="Checked">
+                                            <VisualState.Setters>
+                                                <Setter Target="MuteBorder.Background" Value="#451A22" />
+                                                <Setter Target="MuteIcon.Foreground" Value="#F87171" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Indeterminate" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <ContentPresenter x:Name="MuteIcon"
+                                                  Content="{TemplateBinding Icon}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Clean button style for queue header actions -->
+            <Style x:Key="QueueActionButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="#94A3B8" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Width" Value="32" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="MinWidth" Value="32" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="ActionBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="ActionBorder.Background" Value="#252A3D" />
+                                                <Setter Target="ActionPresenter.Foreground" Value="#F1F5F9" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="ActionBorder.Background" Value="#1A1E2C" />
+                                                <Setter Target="ActionPresenter.Foreground" Value="#7C5CFC" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="ActionBorder.Opacity" Value="0.3" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <ContentPresenter x:Name="ActionPresenter"
+                                                  Content="{TemplateBinding Content}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </Grid.Resources>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition x:Name="QueueColumn" Width="300" />
+            <ColumnDefinition x:Name="QueueColumn" Width="320" />
         </Grid.ColumnDefinitions>
 
-        <Border x:Name="VideoSurface" Grid.Row="0" Grid.Column="0" Margin="0,0,18,0" CornerRadius="18"
-                Background="#080B12" BorderBrush="#D1D8E5" BorderThickness="1">
+        <!-- Video Player Surface -->
+        <Border x:Name="VideoSurface" Grid.Row="0" Grid.Column="0" Margin="0,0,16,0" CornerRadius="16"
+                Background="#06070A" BorderBrush="#1E2332" BorderThickness="1">
             <Grid>
                 <MediaPlayerElement x:Name="VideoPlayer" AutoPlay="False" AreTransportControlsEnabled="False"
                                     Stretch="Uniform" />
+
+                <!-- Empty State Card (Dark glassmorphic style) -->
                 <Border x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1"
-                        CornerRadius="20" Padding="32,28" MaxWidth="440" IsHitTestVisible="False">
+                        Background="#131622" BorderBrush="#252B3E" BorderThickness="1"
+                        CornerRadius="20" Padding="36,32" MaxWidth="460" IsHitTestVisible="False">
                     <Border.Shadow>
                         <ThemeShadow />
                     </Border.Shadow>
-                    <StackPanel Spacing="12">
+                    <StackPanel Spacing="14">
                         <StackPanel.Transitions>
                             <TransitionCollection>
                                 <EntranceThemeTransition />
                             </TransitionCollection>
                         </StackPanel.Transitions>
-                        <Border Width="76" Height="76" CornerRadius="38" Background="#ECE7FD"
-                                HorizontalAlignment="Center" BorderBrush="#D8D0F5" BorderThickness="1">
-                            <SymbolIcon Symbol="Video" Foreground="#7054D8"
+                        <Border Width="72" Height="72" CornerRadius="36" Background="#241C42"
+                                HorizontalAlignment="Center" BorderBrush="#3D2D6E" BorderThickness="1">
+                            <SymbolIcon Symbol="Video" Foreground="#A78BFA"
                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <TextBlock Text="Your next watch starts here" FontSize="20" FontWeight="SemiBold"
-                                   Foreground="#1E293B" HorizontalAlignment="Center" TextAlignment="Center" />
+                                   Foreground="#F8FAFC" HorizontalAlignment="Center" TextAlignment="Center" />
                         <TextBlock Text="Open a video, stream, or drag and drop media files into the player to start watching."
-                                   FontSize="13" Foreground="#64748B" HorizontalAlignment="Center"
-                                   TextAlignment="Center" TextWrapping="WrapWholeWords" LineHeight="18" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,4,0,0">
-                            <Border Background="#F1F5F9" CornerRadius="6" Padding="8,4">
-                                <TextBlock Text="Space : Play/Pause" FontSize="11" Foreground="#64748B" />
+                                   FontSize="13" Foreground="#94A3B8" HorizontalAlignment="Center"
+                                   TextAlignment="Center" TextWrapping="WrapWholeWords" LineHeight="19" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,6,0,0">
+                            <Border Background="#1C2030" BorderBrush="#2A3045" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                <TextBlock Text="Space : Play/Pause" FontSize="11" Foreground="#CBD5E1" />
                             </Border>
-                            <Border Background="#F1F5F9" CornerRadius="6" Padding="8,4">
-                                <TextBlock Text="M : Mute" FontSize="11" Foreground="#64748B" />
+                            <Border Background="#1C2030" BorderBrush="#2A3045" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                <TextBlock Text="M : Mute" FontSize="11" Foreground="#CBD5E1" />
                             </Border>
-                            <Border Background="#F1F5F9" CornerRadius="6" Padding="8,4">
-                                <TextBlock Text="F : Fullscreen" FontSize="11" Foreground="#64748B" />
+                            <Border Background="#1C2030" BorderBrush="#2A3045" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                <TextBlock Text="F : Fullscreen" FontSize="11" Foreground="#CBD5E1" />
                             </Border>
                         </StackPanel>
                     </StackPanel>
                 </Border>
+
+                <!-- Floating Playback Controls Bar -->
                 <Border VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
-                        Margin="20" Padding="16,12" CornerRadius="16" BorderThickness="1"
-                        BorderBrush="#80FFFFFF" IsTabStop="False">
+                        Margin="16" Padding="16,12" CornerRadius="16" BorderThickness="1"
+                        BorderBrush="#2E354B" IsTabStop="False">
                     <Border.Background>
-                        <AcrylicBrush TintColor="#F7F8FF" TintOpacity="0.82"
-                                      FallbackColor="#F2F4FA" />
+                        <AcrylicBrush TintColor="#121520" TintOpacity="0.88"
+                                      FallbackColor="#121520" />
                     </Border.Background>
                     <Border.Shadow>
                         <ThemeShadow />
@@ -97,46 +395,51 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <Grid Grid.Row="0" ColumnSpacing="12" Margin="2,0,2,8">
+
+                        <!-- Timeline Seek Bar -->
+                        <Grid Grid.Row="0" ColumnSpacing="12" Margin="2,0,2,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock x:Name="CurrentTimeText" Text="00:00" VerticalAlignment="Center"
-                                       FontSize="12" FontFamily="Segoe UI Variable Text, Consolas" FontWeight="Medium" Foreground="#344054" />
+                                       FontSize="12" FontFamily="Segoe UI Variable Text, Consolas" FontWeight="Medium" Foreground="#94A3B8" />
                             <Slider Grid.Column="1" x:Name="SeekSlider" Minimum="0" Maximum="1" Value="0"
                                     ValueChanged="SeekSlider_ValueChanged" VerticalAlignment="Center"
                                     IsEnabled="False"
                                     ToolTipService.ToolTip="Seek (Left / Right arrow keys)" />
                             <TextBlock Grid.Column="2" x:Name="DurationText" Text="00:00"
                                        VerticalAlignment="Center" FontSize="12" FontFamily="Segoe UI Variable Text, Consolas" FontWeight="Medium"
-                                       Foreground="#344054" />
+                                       Foreground="#94A3B8" />
                         </Grid>
-                        <Grid Grid.Row="1" ColumnSpacing="10" VerticalAlignment="Center">
+
+                        <!-- Main Controls Row: Left (Info), Center (Transport), Right (Volume/Actions) -->
+                        <Grid Grid.Row="1" VerticalAlignment="Center">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="170" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="220" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
+
+                            <!-- Left: Now Playing Info -->
                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                 <TextBlock Text="NOW PLAYING" FontSize="10" CharacterSpacing="100" FontWeight="SemiBold"
-                                           Foreground="#68748A" />
+                                           Foreground="#64748B" />
                                 <TextBlock x:Name="NowPlayingText" Text="Choose a video"
-                                           FontSize="13" FontWeight="SemiBold" Foreground="#1E293B"
+                                           FontSize="13" FontWeight="SemiBold" Foreground="#F8FAFC"
                                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                                 <TextBlock x:Name="StatusText" Text="Ready when you are"
-                                           FontSize="11" Foreground="#64748B"
+                                           FontSize="11" Foreground="#94A3B8"
                                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
                                            ToolTipService.ToolTip="Space: play/pause · arrows: seek/volume · M: mute · F: fullscreen" />
                             </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2"
+
+                            <!-- Center: Transport Buttons -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
                                         VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <AppBarButton x:Name="PreviousButton" Click="Previous_Click"
-                                              IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                              Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
+                                              Style="{StaticResource MediaTransportButtonStyle}"
                                               ToolTipService.ToolTip="Previous video (or restart current)"
                                               AutomationProperties.Name="Previous video">
                                     <AppBarButton.Icon>
@@ -144,8 +447,7 @@
                                     </AppBarButton.Icon>
                                 </AppBarButton>
                                 <AppBarButton x:Name="BackTenButton" Click="SeekBackward_Click"
-                                              IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                              Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
+                                              Style="{StaticResource MediaTransportButtonStyle}"
                                               ToolTipService.ToolTip="Back 10 seconds (Left arrow)"
                                               AutomationProperties.Name="Back 10 seconds">
                                     <AppBarButton.Icon>
@@ -153,26 +455,15 @@
                                     </AppBarButton.Icon>
                                 </AppBarButton>
                                 <AppBarButton x:Name="PlayPauseButton" Click="PlayPause_Click"
-                                              IsCompact="True" Width="44" Height="44" MinWidth="44" MinHeight="44"
-                                              Padding="0" Margin="4,0" CornerRadius="22" VerticalAlignment="Center"
-                                              Background="#7054D8" Foreground="#FFFFFF"
+                                              Style="{StaticResource PrimaryPlayButtonStyle}"
                                               ToolTipService.ToolTip="Play / Pause (Space)"
                                               AutomationProperties.Name="Play">
-                                    <AppBarButton.Resources>
-                                        <SolidColorBrush x:Key="AppBarButtonBackground" Color="#7054D8" />
-                                        <SolidColorBrush x:Key="AppBarButtonBackgroundPointerOver" Color="#5E40CC" />
-                                        <SolidColorBrush x:Key="AppBarButtonBackgroundPressed" Color="#4E33AF" />
-                                        <SolidColorBrush x:Key="AppBarButtonForeground" Color="#FFFFFF" />
-                                        <SolidColorBrush x:Key="AppBarButtonForegroundPointerOver" Color="#FFFFFF" />
-                                        <SolidColorBrush x:Key="AppBarButtonForegroundPressed" Color="#FFFFFF" />
-                                    </AppBarButton.Resources>
                                     <AppBarButton.Icon>
-                                        <SymbolIcon Symbol="Play" Foreground="#FFFFFF" />
+                                        <SymbolIcon Symbol="Play" />
                                     </AppBarButton.Icon>
                                 </AppBarButton>
                                 <AppBarButton x:Name="ForwardTenButton" Click="SeekForward_Click"
-                                              IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                              Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
+                                              Style="{StaticResource MediaTransportButtonStyle}"
                                               ToolTipService.ToolTip="Forward 10 seconds (Right arrow)"
                                               AutomationProperties.Name="Forward 10 seconds">
                                     <AppBarButton.Icon>
@@ -180,8 +471,7 @@
                                     </AppBarButton.Icon>
                                 </AppBarButton>
                                 <AppBarButton x:Name="NextButton" Click="Next_Click"
-                                              IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                              Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
+                                              Style="{StaticResource MediaTransportButtonStyle}"
                                               ToolTipService.ToolTip="Next video"
                                               AutomationProperties.Name="Next video">
                                     <AppBarButton.Icon>
@@ -189,167 +479,147 @@
                                     </AppBarButton.Icon>
                                 </AppBarButton>
                             </StackPanel>
-                            <Border Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right"
-                                    Background="#EAEFF8" BorderBrush="#DCE3EF" BorderThickness="1"
-                                    CornerRadius="18" Padding="2,2,10,2">
-                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                    <AppBarToggleButton x:Name="MuteButton" Click="Mute_Click"
-                                                        IsCompact="True" Width="32" Height="32" MinWidth="32" MinHeight="32"
-                                                        Padding="0" CornerRadius="16" VerticalAlignment="Center"
-                                                        ToolTipService.ToolTip="Mute / Unmute (M)"
-                                                        AutomationProperties.Name="Mute">
-                                        <AppBarToggleButton.Resources>
-                                            <SolidColorBrush x:Key="AppBarToggleButtonBackgroundChecked" Color="#FEE2E2" />
-                                            <SolidColorBrush x:Key="AppBarToggleButtonBackgroundCheckedPointerOver" Color="#FECACA" />
-                                            <SolidColorBrush x:Key="AppBarToggleButtonBackgroundCheckedPressed" Color="#FCA5A5" />
-                                            <SolidColorBrush x:Key="AppBarToggleButtonForegroundChecked" Color="#DC2626" />
-                                            <SolidColorBrush x:Key="AppBarToggleButtonForegroundCheckedPointerOver" Color="#B91C1C" />
-                                            <SolidColorBrush x:Key="AppBarToggleButtonForegroundCheckedPressed" Color="#991B1B" />
-                                            <SolidColorBrush x:Key="AppBarToggleButtonCheckGlyphForegroundChecked" Color="#DC2626" />
-                                            <SolidColorBrush x:Key="AppBarToggleButtonCheckGlyphForegroundCheckedPointerOver" Color="#B91C1C" />
-                                            <SolidColorBrush x:Key="AppBarToggleButtonBorderBrushChecked" Color="#FCA5A5" />
-                                        </AppBarToggleButton.Resources>
+
+                            <!-- Right: Volume & Utility Actions -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                        VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <!-- Volume Pill -->
+                                <Border VerticalAlignment="Center"
+                                        Background="#181C2B" BorderBrush="#282E42" BorderThickness="1"
+                                        CornerRadius="18" Padding="3,2,10,2">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <AppBarToggleButton x:Name="MuteButton" Click="Mute_Click"
+                                                            Style="{StaticResource MuteToggleButtonStyle}"
+                                                            ToolTipService.ToolTip="Mute / Unmute (M)"
+                                                            AutomationProperties.Name="Mute">
+                                            <AppBarToggleButton.Icon>
+                                                <SymbolIcon Symbol="Volume" />
+                                            </AppBarToggleButton.Icon>
+                                        </AppBarToggleButton>
+                                        <Slider x:Name="VolumeSlider" Width="88" Minimum="0" Maximum="100"
+                                                Value="70" ValueChanged="VolumeSlider_ValueChanged"
+                                                VerticalAlignment="Center" Margin="0"
+                                                ToolTipService.ToolTip="Volume (Up / Down arrows)"
+                                                AutomationProperties.Name="Volume" />
+                                        <TextBlock x:Name="VolumeText" Text="70%" FontSize="11" FontWeight="SemiBold"
+                                                   FontFamily="Segoe UI Variable Text, Consolas"
+                                                   Foreground="#CBD5E1" Width="32" TextAlignment="Right"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Toggle queue, options, and full screen -->
+                                <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                    <AppBarToggleButton x:Name="CompactModeButton" Click="CompactMode_Click"
+                                                        IsChecked="False"
+                                                        Style="{StaticResource MediaToggleButtonStyle}"
+                                                        ToolTipService.ToolTip="Toggle play queue (Compact mode)"
+                                                        AutomationProperties.Name="Toggle play queue">
                                         <AppBarToggleButton.Icon>
-                                            <SymbolIcon Symbol="Volume" />
+                                            <SymbolIcon Symbol="ViewAll" />
                                         </AppBarToggleButton.Icon>
                                     </AppBarToggleButton>
-                                    <Slider x:Name="VolumeSlider" Width="96" Minimum="0" Maximum="100"
-                                            Value="70" ValueChanged="VolumeSlider_ValueChanged"
-                                            VerticalAlignment="Center" Margin="0"
-                                            ToolTipService.ToolTip="Volume (Up / Down arrows)"
-                                            AutomationProperties.Name="Volume" />
-                                    <TextBlock x:Name="VolumeText" Text="70%" FontSize="11" FontWeight="SemiBold"
-                                               FontFamily="Segoe UI Variable Text, Consolas"
-                                               Foreground="#4B5565" Width="32" TextAlignment="Right"
-                                               VerticalAlignment="Center" />
+                                    <AppBarButton x:Name="MoreActionsButton"
+                                                  Style="{StaticResource MediaTransportButtonStyle}"
+                                                  ToolTipService.ToolTip="Playback settings and options"
+                                                  AutomationProperties.Name="Playback options">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="More" />
+                                        </AppBarButton.Icon>
+                                        <AppBarButton.Flyout>
+                                            <Flyout Placement="Top">
+                                                <StackPanel MinWidth="280" Spacing="14" Padding="12">
+                                                    <TextBlock Text="Playback options" FontSize="15"
+                                                               FontWeight="SemiBold" Foreground="#F8FAFC" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="12"
+                                                                VerticalAlignment="Center">
+                                                        <TextBlock Text="Speed" Width="72"
+                                                                   VerticalAlignment="Center" Foreground="#94A3B8" />
+                                                        <ComboBox x:Name="SpeedPicker" Width="150" SelectedIndex="2"
+                                                                  ToolTipService.ToolTip="Playback speed"
+                                                                  AutomationProperties.Name="Playback speed"
+                                                                  SelectionChanged="SpeedPicker_SelectionChanged">
+                                                            <ComboBoxItem Content="0.5×" />
+                                                            <ComboBoxItem Content="0.75×" />
+                                                            <ComboBoxItem Content="1×" />
+                                                            <ComboBoxItem Content="1.25×" />
+                                                            <ComboBoxItem Content="1.5×" />
+                                                            <ComboBoxItem Content="2×" />
+                                                        </ComboBox>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <AppBarToggleButton x:Name="ShuffleButton" Click="Shuffle_Click"
+                                                                            Style="{StaticResource MediaToggleButtonStyle}"
+                                                                            ToolTipService.ToolTip="Shuffle queue"
+                                                                            AutomationProperties.Name="Shuffle queue">
+                                                            <AppBarToggleButton.Icon>
+                                                                <SymbolIcon Symbol="Shuffle" />
+                                                            </AppBarToggleButton.Icon>
+                                                        </AppBarToggleButton>
+                                                        <AppBarToggleButton x:Name="RepeatButton" Click="Repeat_Click"
+                                                                            Style="{StaticResource MediaToggleButtonStyle}"
+                                                                            ToolTipService.ToolTip="Repeat current video"
+                                                                            AutomationProperties.Name="Repeat current video">
+                                                            <AppBarToggleButton.Icon>
+                                                                <SymbolIcon Symbol="RepeatOne" />
+                                                            </AppBarToggleButton.Icon>
+                                                        </AppBarToggleButton>
+                                                        <AppBarButton x:Name="StopButton" Click="Stop_Click"
+                                                                      Style="{StaticResource MediaTransportButtonStyle}"
+                                                                      ToolTipService.ToolTip="Stop playback"
+                                                                      AutomationProperties.Name="Stop">
+                                                            <AppBarButton.Icon>
+                                                                <SymbolIcon Symbol="Stop" />
+                                                            </AppBarButton.Icon>
+                                                        </AppBarButton>
+                                                    </StackPanel>
+                                                    <TextBlock Text="Subtitles" FontSize="12" FontWeight="SemiBold"
+                                                               Foreground="#94A3B8" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                        <ComboBox x:Name="SubtitlePicker" Width="180" SelectedIndex="0"
+                                                                  ToolTipService.ToolTip="Subtitle track"
+                                                                  AutomationProperties.Name="Subtitle track"
+                                                                  SelectionChanged="SubtitlePicker_SelectionChanged">
+                                                            <ComboBoxItem Content="Subtitles off" />
+                                                        </ComboBox>
+                                                        <AppBarButton x:Name="OpenSubtitleButton" Click="OpenSubtitle_Click"
+                                                                      Style="{StaticResource MediaTransportButtonStyle}"
+                                                                      ToolTipService.ToolTip="Load an external subtitle file"
+                                                                      AutomationProperties.Name="Load subtitles">
+                                                            <AppBarButton.Icon>
+                                                                <SymbolIcon Symbol="Caption" />
+                                                            </AppBarButton.Icon>
+                                                        </AppBarButton>
+                                                    </StackPanel>
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock Text="Stereo balance" FontSize="12"
+                                                                   FontWeight="SemiBold" Foreground="#94A3B8" />
+                                                        <Slider x:Name="AudioBalanceSlider" Minimum="-100" Maximum="100"
+                                                                Value="0" ValueChanged="AudioBalanceSlider_ValueChanged"
+                                                                ToolTipService.ToolTip="Stereo balance: left to right"
+                                                                AutomationProperties.Name="Stereo balance" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Flyout>
+                                        </AppBarButton.Flyout>
+                                    </AppBarButton>
+                                    <AppBarButton x:Name="FullWindowButton" Click="FullWindow_Click"
+                                                  Style="{StaticResource MediaTransportButtonStyle}"
+                                                  ToolTipService.ToolTip="Full screen (F)"
+                                                  AutomationProperties.Name="Full screen">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="FullScreen" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
                                 </StackPanel>
-                            </Border>
-                            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                                <AppBarToggleButton x:Name="CompactModeButton" Click="CompactMode_Click"
-                                                    IsChecked="False"
-                                                    IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                                    Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
-                                                    ToolTipService.ToolTip="Hide play queue (Compact mode)"
-                                                    AutomationProperties.Name="Toggle play queue">
-                                    <AppBarToggleButton.Resources>
-                                        <SolidColorBrush x:Key="AppBarToggleButtonBackgroundChecked" Color="#E8E4F8" />
-                                        <SolidColorBrush x:Key="AppBarToggleButtonBackgroundCheckedPointerOver" Color="#DDD5F8" />
-                                        <SolidColorBrush x:Key="AppBarToggleButtonBackgroundCheckedPressed" Color="#D0C4F4" />
-                                        <SolidColorBrush x:Key="AppBarToggleButtonForegroundChecked" Color="#7054D8" />
-                                        <SolidColorBrush x:Key="AppBarToggleButtonForegroundCheckedPointerOver" Color="#5B3FC2" />
-                                        <SolidColorBrush x:Key="AppBarToggleButtonForegroundCheckedPressed" Color="#492FAD" />
-                                        <SolidColorBrush x:Key="AppBarToggleButtonCheckGlyphForegroundChecked" Color="#7054D8" />
-                                        <SolidColorBrush x:Key="AppBarToggleButtonCheckGlyphForegroundCheckedPointerOver" Color="#5B3FC2" />
-                                        <SolidColorBrush x:Key="AppBarToggleButtonBorderBrushChecked" Color="#BDB0EF" />
-                                    </AppBarToggleButton.Resources>
-                                    <AppBarToggleButton.Icon>
-                                        <SymbolIcon Symbol="ViewAll" />
-                                    </AppBarToggleButton.Icon>
-                                </AppBarToggleButton>
-                                <AppBarButton x:Name="MoreActionsButton"
-                                              IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                              Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
-                                              ToolTipService.ToolTip="Playback settings and options"
-                                              AutomationProperties.Name="Playback options">
-                                    <AppBarButton.Icon>
-                                        <SymbolIcon Symbol="More" />
-                                    </AppBarButton.Icon>
-                                    <AppBarButton.Flyout>
-                                        <Flyout Placement="Top">
-                                            <StackPanel MinWidth="280" Spacing="12" Padding="8">
-                                                <TextBlock Text="Playback options" FontSize="15"
-                                                           FontWeight="SemiBold" Foreground="#202a3e" />
-                                                <StackPanel Orientation="Horizontal" Spacing="12"
-                                                            VerticalAlignment="Center">
-                                                    <TextBlock Text="Speed" Width="72"
-                                                               VerticalAlignment="Center" Foreground="#58657c" />
-                                                    <ComboBox x:Name="SpeedPicker" Width="150" SelectedIndex="2"
-                                                              ToolTipService.ToolTip="Playback speed"
-                                                              AutomationProperties.Name="Playback speed"
-                                                              SelectionChanged="SpeedPicker_SelectionChanged">
-                                                        <ComboBoxItem Content="0.5×" />
-                                                        <ComboBoxItem Content="0.75×" />
-                                                        <ComboBoxItem Content="1×" />
-                                                        <ComboBoxItem Content="1.25×" />
-                                                        <ComboBoxItem Content="1.5×" />
-                                                        <ComboBoxItem Content="2×" />
-                                                    </ComboBox>
-                                                </StackPanel>
-                                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                    <AppBarToggleButton x:Name="ShuffleButton" Click="Shuffle_Click"
-                                                                        IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                                                        Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
-                                                                        ToolTipService.ToolTip="Shuffle queue"
-                                                                        AutomationProperties.Name="Shuffle queue">
-                                                        <AppBarToggleButton.Icon>
-                                                            <SymbolIcon Symbol="Shuffle" />
-                                                        </AppBarToggleButton.Icon>
-                                                    </AppBarToggleButton>
-                                                    <AppBarToggleButton x:Name="RepeatButton" Click="Repeat_Click"
-                                                                        IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                                                        Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
-                                                                        ToolTipService.ToolTip="Repeat current video"
-                                                                        AutomationProperties.Name="Repeat current video">
-                                                        <AppBarToggleButton.Icon>
-                                                            <SymbolIcon Symbol="RepeatOne" />
-                                                        </AppBarToggleButton.Icon>
-                                                    </AppBarToggleButton>
-                                                    <AppBarButton x:Name="StopButton" Click="Stop_Click"
-                                                                  IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                                                  Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
-                                                                  ToolTipService.ToolTip="Stop playback"
-                                                                  AutomationProperties.Name="Stop">
-                                                        <AppBarButton.Icon>
-                                                            <SymbolIcon Symbol="Stop" />
-                                                        </AppBarButton.Icon>
-                                                    </AppBarButton>
-                                                </StackPanel>
-                                                <TextBlock Text="Subtitles" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="#58657c" />
-                                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                    <ComboBox x:Name="SubtitlePicker" Width="180" SelectedIndex="0"
-                                                              ToolTipService.ToolTip="Subtitle track"
-                                                              AutomationProperties.Name="Subtitle track"
-                                                              SelectionChanged="SubtitlePicker_SelectionChanged">
-                                                        <ComboBoxItem Content="Subtitles off" />
-                                                    </ComboBox>
-                                                    <AppBarButton x:Name="OpenSubtitleButton" Click="OpenSubtitle_Click"
-                                                                  IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                                                  Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
-                                                                  ToolTipService.ToolTip="Load an external subtitle file"
-                                                                  AutomationProperties.Name="Load subtitles">
-                                                        <AppBarButton.Icon>
-                                                            <SymbolIcon Symbol="Caption" />
-                                                        </AppBarButton.Icon>
-                                                    </AppBarButton>
-                                                </StackPanel>
-                                                <StackPanel Spacing="4">
-                                                    <TextBlock Text="Stereo balance" FontSize="12"
-                                                               FontWeight="SemiBold" Foreground="#58657c" />
-                                                    <Slider x:Name="AudioBalanceSlider" Minimum="-100" Maximum="100"
-                                                            Value="0" ValueChanged="AudioBalanceSlider_ValueChanged"
-                                                            ToolTipService.ToolTip="Stereo balance: left to right"
-                                                            AutomationProperties.Name="Stereo balance" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Flyout>
-                                    </AppBarButton.Flyout>
-                                </AppBarButton>
-                                <AppBarButton x:Name="FullWindowButton" Click="FullWindow_Click"
-                                              IsCompact="True" Width="36" Height="36" MinWidth="36" MinHeight="36"
-                                              Padding="0" Margin="1,0" CornerRadius="8" VerticalAlignment="Center"
-                                              ToolTipService.ToolTip="Full screen (F)"
-                                              AutomationProperties.Name="Full screen">
-                                    <AppBarButton.Icon>
-                                        <SymbolIcon Symbol="FullScreen" />
-                                    </AppBarButton.Icon>
-                                </AppBarButton>
                             </StackPanel>
                         </Grid>
                     </Grid>
                 </Border>
-                <Border x:Name="DropOverlay" Visibility="Collapsed" Background="#EAF0FB"
-                        BorderBrush="#8067df" BorderThickness="2" CornerRadius="18"
+
+                <!-- Drop Overlay -->
+                <Border x:Name="DropOverlay" Visibility="Collapsed" Background="#E60B0D13"
+                        BorderBrush="#7C5CFC" BorderThickness="2" CornerRadius="16"
                         IsHitTestVisible="False">
                     <Border.Transitions>
                         <TransitionCollection>
@@ -357,19 +627,20 @@
                         </TransitionCollection>
                     </Border.Transitions>
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                        <SymbolIcon Symbol="Add" Foreground="#7054d8"
+                        <SymbolIcon Symbol="Add" Foreground="#A78BFA"
                                     HorizontalAlignment="Center" />
                         <TextBlock Text="Drop media or subtitles"
-                                   Foreground="#202a3e" FontSize="18" FontWeight="SemiBold" />
+                                   Foreground="#F8FAFC" FontSize="18" FontWeight="SemiBold" />
                         <TextBlock Text="Media joins the queue · subtitles attach to the current item"
-                                   Foreground="#657188" FontSize="12" />
+                                   Foreground="#94A3B8" FontSize="12" />
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
 
-        <Border x:Name="QueuePanel" Grid.Row="0" Grid.Column="1" Margin="0" Padding="16" CornerRadius="18"
-                Background="#ffffff" BorderBrush="#dfe4ee" BorderThickness="1">
+        <!-- Right Side: Play Queue Sidebar -->
+        <Border x:Name="QueuePanel" Grid.Row="0" Grid.Column="1" Margin="0" Padding="16" CornerRadius="16"
+                Background="#121520" BorderBrush="#222738" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -381,42 +652,34 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Spacing="3" VerticalAlignment="Center">
-                        <TextBlock Text="Play queue" FontSize="17" FontWeight="SemiBold"
-                                   Foreground="#202a3e" />
+                        <TextBlock Text="Play queue" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#F8FAFC" />
                         <TextBlock x:Name="QueueCountText" Text="0 videos"
-                                   FontSize="12" Foreground="#68748a" />
+                                   FontSize="12" Foreground="#94A3B8" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                         <Button x:Name="OpenVideoButton" Click="OpenVideo_Click"
-                                Style="{StaticResource SubtleButtonStyle}"
-                                Width="32" Height="32" MinWidth="32" MinHeight="32"
-                                Padding="0" CornerRadius="6" VerticalAlignment="Center"
+                                Style="{StaticResource QueueActionButtonStyle}"
                                 ToolTipService.ToolTip="Choose video or audio files"
                                 AutomationProperties.Name="Open media">
                             <SymbolIcon Symbol="OpenFile" />
                         </Button>
                         <Button x:Name="OpenStreamButton" Click="OpenStream_Click"
-                                Style="{StaticResource SubtleButtonStyle}"
-                                Width="32" Height="32" MinWidth="32" MinHeight="32"
-                                Padding="0" CornerRadius="6" VerticalAlignment="Center"
+                                Style="{StaticResource QueueActionButtonStyle}"
                                 ToolTipService.ToolTip="Open a network stream"
                                 AutomationProperties.Name="Open network stream">
                             <SymbolIcon Symbol="World" />
                         </Button>
                         <Button x:Name="RemoveQueueItemButton" Click="RemoveQueueItem_Click"
                                 IsEnabled="False"
-                                Style="{StaticResource SubtleButtonStyle}"
-                                Width="32" Height="32" MinWidth="32" MinHeight="32"
-                                Padding="0" CornerRadius="6" VerticalAlignment="Center"
+                                Style="{StaticResource QueueActionButtonStyle}"
                                 ToolTipService.ToolTip="Remove selected item"
                                 AutomationProperties.Name="Remove selected item">
-                            <SymbolIcon Symbol="Remove" />
+                            <SymbolIcon Symbol="Cancel" />
                         </Button>
                         <Button x:Name="ClearQueueButton" Click="ClearQueue_Click"
                                 IsEnabled="False"
-                                Style="{StaticResource SubtleButtonStyle}"
-                                Width="32" Height="32" MinWidth="32" MinHeight="32"
-                                Padding="0" CornerRadius="6" VerticalAlignment="Center"
+                                Style="{StaticResource QueueActionButtonStyle}"
                                 ToolTipService.ToolTip="Clear the play queue"
                                 AutomationProperties.Name="Clear queue">
                             <SymbolIcon Symbol="Delete" />
@@ -426,7 +689,7 @@
                 <Grid Grid.Row="1">
                     <ListView x:Name="PlaylistView" SelectionChanged="Playlist_SelectionChanged"
                               SelectionMode="Single" Background="Transparent" BorderThickness="0"
-                              Foreground="#202a3e" Padding="0">
+                              Foreground="#F1F5F9" Padding="0">
                         <ListView.ItemContainerTransitions>
                             <TransitionCollection>
                                 <EntranceThemeTransition IsStaggeringEnabled="True" />
@@ -434,37 +697,40 @@
                         </ListView.ItemContainerTransitions>
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                    <Grid Padding="8,10" ColumnSpacing="10" CornerRadius="10"
-                                          Background="Transparent">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="28" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Border Width="22" Height="22" CornerRadius="7" Background="#eef1f8"
-                                                HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <SymbolIcon Symbol="Video" Foreground="#7054d8"
-                                                        VerticalAlignment="Center" HorizontalAlignment="Center" />
-                                        </Border>
-                                        <TextBlock Grid.Column="1" Text="{Binding}" FontSize="13"
-                                                   Foreground="#202a3e" VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                        <StackPanel x:Name="QueueEmptyState" HorizontalAlignment="Center"
-                                    VerticalAlignment="Center" Spacing="8" IsHitTestVisible="False">
+                                <Grid Padding="10,8" ColumnSpacing="10" CornerRadius="8"
+                                      Background="Transparent">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="28" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="24" Height="24" CornerRadius="6" Background="#1E2335"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <SymbolIcon Symbol="Video" Foreground="#A78BFA"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="{Binding}" FontSize="13"
+                                               Foreground="#F1F5F9" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <StackPanel x:Name="QueueEmptyState" HorizontalAlignment="Center"
+                                VerticalAlignment="Center" Spacing="8" IsHitTestVisible="False">
                         <StackPanel.Transitions>
                             <TransitionCollection>
                                 <EntranceThemeTransition />
                             </TransitionCollection>
                         </StackPanel.Transitions>
-                        <SymbolIcon Symbol="Play" Foreground="#8792a6"
-                                    HorizontalAlignment="Center" />
+                        <Border Width="52" Height="52" CornerRadius="26" Background="#1A1E2C"
+                                BorderBrush="#282E42" BorderThickness="1">
+                            <SymbolIcon Symbol="Play" Foreground="#64748B"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
                         <TextBlock Text="Nothing in the queue yet" FontSize="13"
-                                   Foreground="#58657c" HorizontalAlignment="Center" />
+                                   Foreground="#94A3B8" HorizontalAlignment="Center" />
                         <TextBlock Text="Add videos to build your watch list"
-                                   FontSize="11" Foreground="#7a869b" HorizontalAlignment="Center" />
+                                   FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Grid>
             </Grid>
