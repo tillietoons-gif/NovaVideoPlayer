@@ -624,6 +624,11 @@ namespace winrt::App1::implementation
 
     void MainWindow::FullWindow_Click(IInspectable const&, RoutedEventArgs const&)
     {
+        if (m_isPip)
+        {
+            Pip_Click(nullptr, RoutedEventArgs{ nullptr });
+        }
+
         auto windowNative = this->try_as<IWindowNative>();
         if (!windowNative)
         {
@@ -974,6 +979,18 @@ namespace winrt::App1::implementation
             this->VolumeSlider().Value(std::max(0.0, this->VolumeSlider().Value() - 5.0));
             args.Handled(true);
             break;
+        case Windows::System::VirtualKey::Escape:
+            if (m_isFullScreen)
+            {
+                FullWindow_Click(nullptr, RoutedEventArgs{ nullptr });
+                args.Handled(true);
+            }
+            else if (m_isPip)
+            {
+                Pip_Click(nullptr, RoutedEventArgs{ nullptr });
+                args.Handled(true);
+            }
+            break;
         case Windows::System::VirtualKey::M:
             Mute_Click(nullptr, RoutedEventArgs{ nullptr });
             args.Handled(true);
@@ -1199,6 +1216,20 @@ namespace winrt::App1::implementation
 
     void MainWindow::ShowControls()
     {
+        if (m_isPip)
+        {
+            if (this->PipOverlay())
+            {
+                this->PipOverlay().Opacity(1.0);
+                this->PipOverlay().IsHitTestVisible(true);
+            }
+            if (this->ControlsBar())
+            {
+                this->ControlsBar().Visibility(Visibility::Collapsed);
+            }
+            return;
+        }
+
         if (m_controlsHidden)
         {
             m_controlsHidden = false;
@@ -1212,6 +1243,16 @@ namespace winrt::App1::implementation
 
     void MainWindow::HideControls()
     {
+        if (m_isPip)
+        {
+            if (!m_isPointerOverControls && this->PipOverlay())
+            {
+                this->PipOverlay().Opacity(0.0);
+                this->PipOverlay().IsHitTestVisible(false);
+            }
+            return;
+        }
+
         if (!m_controlsHidden &&
             m_mediaPlayer &&
             m_mediaPlayer.PlaybackSession().PlaybackState() == MediaPlaybackState::Playing &&
@@ -1261,19 +1302,76 @@ namespace winrt::App1::implementation
             {
                 appWindow.SetPresenter(Microsoft::UI::Windowing::AppWindowPresenterKind::Default);
                 m_isPip = false;
+
+                if (this->PipOverlay())
+                {
+                    this->PipOverlay().Visibility(Visibility::Collapsed);
+                    this->PipOverlay().Opacity(0.0);
+                    this->PipOverlay().IsHitTestVisible(false);
+                }
+
+                this->RootGrid().Padding(Thickness{ 16, 16, 16, 16 });
+                this->VideoSurface().Margin(Thickness{ 0, 0, m_compactMode ? 0.0 : 16.0, 0 });
+                this->VideoSurface().CornerRadius(CornerRadius{ 16 });
+                this->VideoSurface().BorderThickness(Thickness{ 1 });
                 this->QueuePanel().Visibility(m_compactMode ? Visibility::Collapsed : Visibility::Visible);
                 this->QueueColumn().Width(GridLength{ m_compactMode ? 0.0 : 320.0, Microsoft::UI::Xaml::GridUnitType::Pixel });
-                this->VideoSurface().Margin(Thickness{ 0, 0, m_compactMode ? 0.0 : 16.0, 0 });
+
+                if (this->ControlsBar())
+                {
+                    this->ControlsBar().Visibility(Visibility::Visible);
+                    this->ControlsBar().Opacity(1.0);
+                    this->ControlsBar().IsHitTestVisible(true);
+                }
+
+                if (m_playlist.empty())
+                {
+                    this->EmptyState().Visibility(Visibility::Visible);
+                }
+
+                m_controlsHidden = false;
                 this->StatusText().Text(L"Exited Picture-in-Picture");
                 ToolTipService::SetToolTip(this->PipButton(), box_value(L"Picture-in-Picture (P)"));
             }
             else
             {
+                if (m_isFullScreen)
+                {
+                    FullWindow_Click(nullptr, RoutedEventArgs{ nullptr });
+                }
+
                 appWindow.SetPresenter(Microsoft::UI::Windowing::AppWindowPresenterKind::CompactOverlay);
                 m_isPip = true;
+
+                if (this->ControlsBar())
+                {
+                    this->ControlsBar().Visibility(Visibility::Collapsed);
+                    this->ControlsBar().Opacity(0.0);
+                    this->ControlsBar().IsHitTestVisible(false);
+                }
+
                 this->QueuePanel().Visibility(Visibility::Collapsed);
                 this->QueueColumn().Width(GridLength{ 0.0, Microsoft::UI::Xaml::GridUnitType::Pixel });
+                this->EmptyState().Visibility(Visibility::Collapsed);
+
+                this->RootGrid().Padding(Thickness{ 0 });
                 this->VideoSurface().Margin(Thickness{ 0 });
+                this->VideoSurface().CornerRadius(CornerRadius{ 0 });
+                this->VideoSurface().BorderThickness(Thickness{ 0 });
+
+                if (this->PipOverlay())
+                {
+                    this->PipOverlay().Visibility(Visibility::Visible);
+                    this->PipOverlay().Opacity(1.0);
+                    this->PipOverlay().IsHitTestVisible(true);
+                }
+
+                if (m_inactivityTimer)
+                {
+                    m_inactivityTimer.Stop();
+                    m_inactivityTimer.Start();
+                }
+
                 this->StatusText().Text(L"Picture-in-Picture (Always on top)");
                 ToolTipService::SetToolTip(this->PipButton(), box_value(L"Exit Picture-in-Picture (P)"));
             }
@@ -1281,6 +1379,35 @@ namespace winrt::App1::implementation
         catch (hresult_error const& ex)
         {
             this->StatusText().Text(L"Could not toggle PiP: " + ex.message());
+        }
+    }
+
+    void MainWindow::PipRestore_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        Pip_Click(nullptr, RoutedEventArgs{ nullptr });
+    }
+
+    void MainWindow::PipClose_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        if (m_mediaPlayer)
+        {
+            try
+            {
+                m_mediaPlayer.Pause();
+            }
+            catch (...)
+            {
+            }
+        }
+        this->Close();
+    }
+
+    void MainWindow::VideoSurface_PointerPressed(IInspectable const&, Input::PointerRoutedEventArgs const& args)
+    {
+        if (m_isPip)
+        {
+            PlayPause_Click(nullptr, RoutedEventArgs{ nullptr });
+            args.Handled(true);
         }
     }
 

@@ -326,6 +326,116 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <!-- Sleek button style for PiP overlay actions -->
+            <Style x:Key="PipMiniButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="#CC141824" />
+                <Setter Property="Foreground" Value="#F8FAFC" />
+                <Setter Property="BorderBrush" Value="#33FFFFFF" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Width" Value="32" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="MinWidth" Value="32" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="PipBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="PipBorder.Background" Value="#E6252C3F" />
+                                                <Setter Target="PipBorder.BorderBrush" Value="#7C5CFC" />
+                                                <Setter Target="PipContent.Foreground" Value="#FFFFFF" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="PipBorder.Background" Value="#CC181C28" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="PipBorder.Opacity" Value="0.3" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <ContentPresenter x:Name="PipContent"
+                                                  Content="{TemplateBinding Content}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Sleek button style for PiP Close button -->
+            <Style x:Key="PipCloseButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="#CC141824" />
+                <Setter Property="Foreground" Value="#F8FAFC" />
+                <Setter Property="BorderBrush" Value="#33FFFFFF" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Width" Value="32" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="MinWidth" Value="32" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="PipCloseBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="PipCloseBorder.Background" Value="#D41E24" />
+                                                <Setter Target="PipCloseBorder.BorderBrush" Value="#FF4D4D" />
+                                                <Setter Target="PipCloseContent.Foreground" Value="#FFFFFF" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="PipCloseBorder.Background" Value="#A01217" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="PipCloseBorder.Opacity" Value="0.3" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <ContentPresenter x:Name="PipCloseContent"
+                                                  Content="{TemplateBinding Content}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </Grid.Resources>
 
         <Grid.RowDefinitions>
@@ -338,7 +448,8 @@
 
         <!-- Video Player Surface -->
         <Border x:Name="VideoSurface" Grid.Row="0" Grid.Column="0" Margin="0,0,16,0" CornerRadius="16"
-                Background="#06070A" BorderBrush="#1E2332" BorderThickness="1">
+                Background="#06070A" BorderBrush="#1E2332" BorderThickness="1"
+                PointerPressed="VideoSurface_PointerPressed">
             <Grid>
                 <MediaPlayerElement x:Name="VideoPlayer" AutoPlay="False" AreTransportControlsEnabled="False"
                                     Stretch="Uniform" />
@@ -697,6 +808,41 @@
                         </Grid>
                     </Grid>
                 </Border>
+
+                <!-- Picture-in-Picture Mini Overlay (Only Enlarge and Close buttons) -->
+                <Grid x:Name="PipOverlay" Visibility="Collapsed"
+                      VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                      Padding="8,8,8,16"
+                      PointerEntered="ControlsBar_PointerEntered"
+                      PointerExited="ControlsBar_PointerExited">
+                    <Grid.Background>
+                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                            <GradientStop Color="#B3000000" Offset="0.0" />
+                            <GradientStop Color="#00000000" Offset="1.0" />
+                        </LinearGradientBrush>
+                    </Grid.Background>
+                    <Grid.Transitions>
+                        <TransitionCollection>
+                            <ContentThemeTransition />
+                        </TransitionCollection>
+                    </Grid.Transitions>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                        <!-- Enlarge / Back to Window button -->
+                        <Button x:Name="PipRestoreButton" Click="PipRestore_Click"
+                                Style="{StaticResource PipMiniButtonStyle}"
+                                ToolTipService.ToolTip="Enlarge player (P)"
+                                AutomationProperties.Name="Enlarge player">
+                            <SymbolIcon Symbol="BackToWindow" />
+                        </Button>
+                        <!-- Close player button -->
+                        <Button x:Name="PipCloseButton" Click="PipClose_Click"
+                                Style="{StaticResource PipCloseButtonStyle}"
+                                ToolTipService.ToolTip="Close player"
+                                AutomationProperties.Name="Close player">
+                            <SymbolIcon Symbol="Cancel" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
 
                 <!-- Drop Overlay -->
                 <Border x:Name="DropOverlay" Visibility="Collapsed" Background="#E60B0D13"
