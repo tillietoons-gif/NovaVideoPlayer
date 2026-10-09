@@ -89,6 +89,7 @@ namespace winrt::App1::implementation
         this->StatusText().Text(L"Ready when you are");
         this->QueueCountText().Text(L"0 videos");
         this->NowPlayingText().Text(L"Choose a video");
+        this->VolumeText().Text(L"70%");
     }
 
     hstring MainWindow::NormalizeFilePathForUri(std::wstring const& sourcePath)
@@ -612,7 +613,6 @@ namespace winrt::App1::implementation
 
             m_isFullScreen = true;
             this->RootGrid().Padding(Thickness{ 0, 0, 0, 0 });
-            this->HeaderPanel().Visibility(Visibility::Collapsed);
             this->QueuePanel().Visibility(Visibility::Collapsed);
             this->QueueColumn().Width(GridLength{ 0.0 });
             this->VideoSurface().Margin(Thickness{ 0 });
@@ -640,11 +640,10 @@ namespace winrt::App1::implementation
 
             m_isFullScreen = false;
             this->RootGrid().Padding(Thickness{ 20, 20, 20, 20 });
-            this->HeaderPanel().Visibility(Visibility::Visible);
             this->QueuePanel().Visibility(m_compactMode ? Visibility::Collapsed : Visibility::Visible);
-            this->QueueColumn().Width(GridLength{ m_compactMode ? 0.0 : 280.0,
+            this->QueueColumn().Width(GridLength{ m_compactMode ? 0.0 : 300.0,
                 Microsoft::UI::Xaml::GridUnitType::Pixel });
-            this->VideoSurface().Margin(Thickness{ 0, 0, 18, 18 });
+            this->VideoSurface().Margin(Thickness{ 0, 0, m_compactMode ? 0.0 : 18.0, 0 });
         }
 
         this->FullWindowButton().Icon(SymbolIcon(
@@ -660,6 +659,19 @@ namespace winrt::App1::implementation
         this->MuteButton().IsChecked(isMuted);
         this->MuteButton().Icon(SymbolIcon(isMuted ? Symbol::Mute : Symbol::Volume));
         AutomationProperties::SetName(this->MuteButton(), isMuted ? L"Unmute" : L"Mute");
+        ToolTipService::SetToolTip(this->MuteButton(), box_value(isMuted ? L"Unmute (M)" : L"Mute (M)"));
+
+        if (isMuted)
+        {
+            this->VolumeText().Text(L"Muted");
+            this->StatusText().Text(L"Audio muted");
+        }
+        else
+        {
+            auto volumeVal = static_cast<int>(std::round(this->VolumeSlider().Value()));
+            this->VolumeText().Text(to_hstring(volumeVal) + L"%");
+            this->StatusText().Text(L"Audio unmuted (" + to_hstring(volumeVal) + L"%)");
+        }
     }
 
     void MainWindow::Repeat_Click(IInspectable const&, RoutedEventArgs const&)
@@ -849,9 +861,12 @@ namespace winrt::App1::implementation
         m_compactMode = this->CompactModeButton().IsChecked().Value();
         this->QueuePanel().Visibility(m_compactMode ? Visibility::Collapsed : Visibility::Visible);
         this->QueueColumn().Width(GridLength{
-            m_compactMode ? 0.0 : 280.0,
+            m_compactMode ? 0.0 : 300.0,
             Microsoft::UI::Xaml::GridUnitType::Pixel });
-        this->StatusText().Text(m_compactMode ? L"Compact theater mode" : L"Queue visible");
+        this->VideoSurface().Margin(Thickness{ 0, 0, m_compactMode ? 0.0 : 18.0, 0 });
+        this->StatusText().Text(m_compactMode ? L"Compact theater mode (Queue hidden)" : L"Play queue visible");
+        ToolTipService::SetToolTip(this->CompactModeButton(), box_value(m_compactMode ? L"Show play queue" : L"Hide play queue"));
+        AutomationProperties::SetName(this->CompactModeButton(), m_compactMode ? L"Show play queue" : L"Hide play queue");
     }
 
     void MainWindow::RootGrid_KeyDown(IInspectable const&, Input::KeyRoutedEventArgs const& args)
@@ -972,9 +987,40 @@ namespace winrt::App1::implementation
 
     void MainWindow::VolumeSlider_ValueChanged(IInspectable const&, RangeBaseValueChangedEventArgs const&)
     {
+        auto volumeVal = static_cast<int>(std::round(this->VolumeSlider().Value()));
         if (m_mediaPlayer)
         {
-            m_mediaPlayer.Volume(this->VolumeSlider().Value() / 100.0);
+            m_mediaPlayer.Volume(volumeVal / 100.0);
+            if (m_mediaPlayer.IsMuted() && volumeVal > 0)
+            {
+                m_mediaPlayer.IsMuted(false);
+                this->MuteButton().IsChecked(false);
+            }
+        }
+
+        if (volumeVal == 0)
+        {
+            this->VolumeText().Text(L"0%");
+            this->MuteButton().Icon(SymbolIcon(Symbol::Mute));
+            this->MuteButton().IsChecked(true);
+            AutomationProperties::SetName(this->MuteButton(), L"Unmute");
+            ToolTipService::SetToolTip(this->MuteButton(), box_value(L"Unmute (M)"));
+        }
+        else if (m_mediaPlayer && m_mediaPlayer.IsMuted())
+        {
+            this->VolumeText().Text(L"Muted");
+            this->MuteButton().Icon(SymbolIcon(Symbol::Mute));
+            this->MuteButton().IsChecked(true);
+            AutomationProperties::SetName(this->MuteButton(), L"Unmute");
+            ToolTipService::SetToolTip(this->MuteButton(), box_value(L"Unmute (M)"));
+        }
+        else
+        {
+            this->VolumeText().Text(to_hstring(volumeVal) + L"%");
+            this->MuteButton().Icon(SymbolIcon(Symbol::Volume));
+            this->MuteButton().IsChecked(false);
+            AutomationProperties::SetName(this->MuteButton(), L"Mute");
+            ToolTipService::SetToolTip(this->MuteButton(), box_value(L"Mute (M)"));
         }
     }
 
@@ -1007,6 +1053,7 @@ namespace winrt::App1::implementation
             m_mediaPlayer.PlaybackSession().PlaybackState() == MediaPlaybackState::Playing;
         this->PlayPauseButton().Icon(SymbolIcon(isPlaying ? Symbol::Pause : Symbol::Play));
         AutomationProperties::SetName(this->PlayPauseButton(), isPlaying ? L"Pause" : L"Play");
+        ToolTipService::SetToolTip(this->PlayPauseButton(), box_value(isPlaying ? L"Pause (Space)" : L"Play (Space)"));
     }
 
     void MainWindow::UpdateTimeline()
