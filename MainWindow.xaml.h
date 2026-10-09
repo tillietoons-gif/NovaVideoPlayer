@@ -10,6 +10,8 @@
 #include <windows.h>
 #include <random>
 #include <vector>
+#include <unordered_map>
+#include <string>
 
 namespace winrt::App1::implementation
 {
@@ -48,11 +50,26 @@ namespace winrt::App1::implementation
         void SubtitlePicker_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
         void SpeedPicker_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
 
+        void RootGrid_PointerMoved(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& args);
+        void ControlsBar_PointerEntered(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& args);
+        void ControlsBar_PointerExited(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& args);
+
+        winrt::fire_and_forget Snapshot_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void Pip_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+
+        void AspectRatioPicker_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
+        void AudioTrackPicker_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
+
+        void SubDelayMinus_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void SubDelayPlus_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void SubDelayReset_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+
     private:
         winrt::Windows::Media::Playback::MediaPlayer m_mediaPlayer{ nullptr };
         winrt::Windows::Media::Core::MediaSource m_currentMediaSource{ nullptr };
         winrt::Windows::Media::Playback::MediaPlaybackItem m_currentPlaybackItem{ nullptr };
         winrt::Microsoft::UI::Xaml::DispatcherTimer m_timer{ nullptr };
+        winrt::Microsoft::UI::Xaml::DispatcherTimer m_inactivityTimer{ nullptr };
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::hstring> m_playlistItems{ nullptr };
         std::vector<std::wstring> m_playlist;
         std::vector<uint32_t> m_subtitleTrackIndices;
@@ -60,21 +77,37 @@ namespace winrt::App1::implementation
         bool m_updatingSeekSlider{ false };
         bool m_updatingPlaylistSelection{ false };
         bool m_updatingSubtitlePicker{ false };
+        bool m_updatingAudioPicker{ false };
+        bool m_updatingAspectRatio{ false };
         bool m_compactMode{ false };
         bool m_shuffleEnabled{ false };
         bool m_isFullScreen{ false };
+        bool m_isPip{ false };
+        bool m_isPointerOverControls{ false };
+        bool m_controlsHidden{ false };
+        int32_t m_subtitleDelayMs{ 0 };
         LONG_PTR m_windowedStyle{};
         WINDOWPLACEMENT m_windowedPlacement{ sizeof(WINDOWPLACEMENT) };
         std::mt19937 m_random{ std::random_device{}() };
+
+        std::unordered_map<std::wstring, double> m_resumePositions;
+        std::vector<std::wstring> m_recentFiles;
 
         void PlayIndex(size_t index);
         void QueueMediaFiles(std::vector<std::wstring> const& paths);
         bool AddSubtitleFile(std::wstring const& path);
         void RefreshSubtitleTracks();
+        void RefreshAudioTracks();
+        void AdjustSubtitleDelay(int32_t deltaMs);
         void AdvancePlaylist(bool backwards);
         void UpdatePlaybackState();
         void UpdateTimeline();
         void SeekBy(double seconds);
+        void ShowControls();
+        void HideControls();
+        void LoadPlaybackHistory();
+        void SavePlaybackHistory();
+        void UpdateRecentMenu();
         static winrt::hstring NormalizeFilePathForUri(std::wstring const& sourcePath);
         static winrt::hstring FormatTime(double seconds);
     };

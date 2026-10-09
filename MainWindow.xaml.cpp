@@ -16,10 +16,17 @@
 #include <sstream>
 #include <utility>
 #include <unordered_set>
+#include <shlobj.h>
+#pragma comment(lib, "shell32.lib")
+#include <robuffer.h>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 #include <winrt/Microsoft.UI.Xaml.Automation.h>
 #include <winrt/Windows.System.h>
 #include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Microsoft.UI.Windowing.h>
+#include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
+#include <winrt/Windows.Graphics.Imaging.h>
 #include <microsoft.ui.xaml.window.h>
 
 using namespace winrt;
@@ -64,6 +71,12 @@ namespace winrt::App1::implementation
 
         m_mediaPlayer.MediaEnded([this](MediaPlayer const&, IInspectable const&)
         {
+            if (m_currentIndex < m_playlist.size())
+            {
+                m_resumePositions[m_playlist[m_currentIndex]] = 0.0;
+                SavePlaybackHistory();
+            }
+
             auto repeat = this->RepeatButton().IsChecked();
             if (repeat && repeat.Value())
             {
@@ -83,8 +96,32 @@ namespace winrt::App1::implementation
             UpdateTimeline();
             UpdatePlaybackState();
             RefreshSubtitleTracks();
+            RefreshAudioTracks();
+
+            if (m_mediaPlayer && m_mediaPlayer.PlaybackSession().PlaybackState() == MediaPlaybackState::Playing)
+            {
+                if (m_currentIndex < m_playlist.size())
+                {
+                    auto curSec = m_mediaPlayer.PlaybackSession().Position().count() / 10'000'000.0;
+                    auto durSec = m_mediaPlayer.PlaybackSession().NaturalDuration().count() / 10'000'000.0;
+                    if (curSec > 5.0 && (durSec <= 0 || curSec < durSec - 10.0))
+                    {
+                        m_resumePositions[m_playlist[m_currentIndex]] = curSec;
+                    }
+                }
+            }
         });
         m_timer.Start();
+
+        m_inactivityTimer = DispatcherTimer();
+        m_inactivityTimer.Interval(std::chrono::milliseconds(2500));
+        m_inactivityTimer.Tick([this](IInspectable const&, IInspectable const&)
+        {
+            HideControls();
+        });
+        m_inactivityTimer.Start();
+
+        LoadPlaybackHistory();
 
         this->StatusText().Text(L"Ready when you are");
         this->QueueCountText().Text(L"0 videos");
@@ -412,6 +449,21 @@ namespace winrt::App1::implementation
         }
 
         auto filePath = m_playlist[index];
+
+        // Track in recent files history
+        auto existIt = std::find(m_recentFiles.begin(), m_recentFiles.end(), filePath);
+        if (existIt != m_recentFiles.end())
+        {
+            m_recentFiles.erase(existIt);
+        }
+        m_recentFiles.insert(m_recentFiles.begin(), filePath);
+        if (m_recentFiles.size() > 15)
+        {
+            m_recentFiles.pop_back();
+        }
+        SavePlaybackHistory();
+        UpdateRecentMenu();
+
         m_currentMediaSource = MediaSource::CreateFromUri(Uri(NormalizeFilePathForUri(filePath)));
         m_currentPlaybackItem = MediaPlaybackItem(m_currentMediaSource);
         m_subtitleTrackIndices.clear();
@@ -420,11 +472,28 @@ namespace winrt::App1::implementation
         this->SubtitlePicker().Items().Append(box_value(L"Subtitles off"));
         this->SubtitlePicker().SelectedIndex(0);
         m_updatingSubtitlePicker = false;
+        m_subtitleDelayMs = 0;
+        if (this->SubDelayText())
+        {
+            this->SubDelayText().Text(L"0 ms");
+        }
+
         m_mediaPlayer.Source(m_currentPlaybackItem);
         this->EmptyState().Visibility(Visibility::Collapsed);
         this->NowPlayingText().Text(hstring(m_playlistItems.GetAt(static_cast<uint32_t>(index))));
         this->StatusText().Text(L"Playing");
         RefreshSubtitleTracks();
+        RefreshAudioTracks();
+
+        // Check if saved resume timestamp exists
+        auto resumeIt = m_resumePositions.find(filePath);
+        if (resumeIt != m_resumePositions.end() && resumeIt->second > 5.0)
+        {
+            auto resumeSec = resumeIt->second;
+            m_mediaPlayer.PlaybackSession().Position(Windows::Foundation::TimeSpan{ static_cast<int64_t>(resumeSec * 10'000'000.0) });
+            this->StatusText().Text(L"Resumed from " + FormatTime(resumeSec));
+        }
+
         m_mediaPlayer.Play();
         UpdatePlaybackState();
         UpdateTimeline();
@@ -442,6 +511,8 @@ namespace winrt::App1::implementation
         {
             m_mediaPlayer.Pause();
             this->StatusText().Text(L"Paused");
+            SavePlaybackHistory();
+            ShowControls();
         }
         else
         {
@@ -461,6 +532,8 @@ namespace winrt::App1::implementation
         m_mediaPlayer.Pause();
         m_mediaPlayer.PlaybackSession().Position(Windows::Foundation::TimeSpan{ 0 });
         this->StatusText().Text(L"Stopped");
+        SavePlaybackHistory();
+        ShowControls();
         UpdatePlaybackState();
         UpdateTimeline();
     }
@@ -712,11 +785,19 @@ namespace winrt::App1::implementation
         this->SeekSlider().Value(0);
         this->SeekSlider().IsEnabled(false);
         m_subtitleTrackIndices.clear();
+        m_subtitleDelayMs = 0;
+        if (this->SubDelayText())
+        {
+            this->SubDelayText().Text(L"0 ms");
+        }
         m_updatingSubtitlePicker = true;
         this->SubtitlePicker().Items().Clear();
         this->SubtitlePicker().Items().Append(box_value(L"Subtitles off"));
         this->SubtitlePicker().SelectedIndex(0);
         m_updatingSubtitlePicker = false;
+        RefreshAudioTracks();
+        SavePlaybackHistory();
+        ShowControls();
         UpdatePlaybackState();
     }
 
@@ -901,6 +982,34 @@ namespace winrt::App1::implementation
             FullWindow_Click(nullptr, RoutedEventArgs{ nullptr });
             args.Handled(true);
             break;
+        case Windows::System::VirtualKey::P:
+            Pip_Click(nullptr, RoutedEventArgs{ nullptr });
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::S:
+            Snapshot_Click(nullptr, RoutedEventArgs{ nullptr });
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::A:
+            if (this->AspectRatioPicker())
+            {
+                auto nextIndex = (this->AspectRatioPicker().SelectedIndex() + 1) % 4;
+                this->AspectRatioPicker().SelectedIndex(nextIndex);
+            }
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::Z:
+            AdjustSubtitleDelay(-50);
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::X:
+            AdjustSubtitleDelay(50);
+            args.Handled(true);
+            break;
+        case Windows::System::VirtualKey::C:
+            AdjustSubtitleDelay(-m_subtitleDelayMs);
+            args.Handled(true);
+            break;
         default:
             break;
         }
@@ -1059,6 +1168,10 @@ namespace winrt::App1::implementation
         this->PlayPauseButton().Icon(SymbolIcon(isPlaying ? Symbol::Pause : Symbol::Play));
         AutomationProperties::SetName(this->PlayPauseButton(), isPlaying ? L"Pause" : L"Play");
         ToolTipService::SetToolTip(this->PlayPauseButton(), box_value(isPlaying ? L"Pause (Space)" : L"Play (Space)"));
+        if (!isPlaying)
+        {
+            ShowControls();
+        }
     }
 
     void MainWindow::UpdateTimeline()
@@ -1082,5 +1195,501 @@ namespace winrt::App1::implementation
             this->SeekSlider().Value(std::clamp(currentSeconds, 0.0, durationSeconds));
             m_updatingSeekSlider = false;
         }
+    }
+
+    void MainWindow::ShowControls()
+    {
+        if (m_controlsHidden)
+        {
+            m_controlsHidden = false;
+            if (this->ControlsBar())
+            {
+                this->ControlsBar().Opacity(1.0);
+                this->ControlsBar().IsHitTestVisible(true);
+            }
+        }
+    }
+
+    void MainWindow::HideControls()
+    {
+        if (!m_controlsHidden &&
+            m_mediaPlayer &&
+            m_mediaPlayer.PlaybackSession().PlaybackState() == MediaPlaybackState::Playing &&
+            !m_isPointerOverControls)
+        {
+            m_controlsHidden = true;
+            if (this->ControlsBar())
+            {
+                this->ControlsBar().Opacity(0.0);
+                this->ControlsBar().IsHitTestVisible(false);
+            }
+        }
+    }
+
+    void MainWindow::RootGrid_PointerMoved(IInspectable const&, Input::PointerRoutedEventArgs const&)
+    {
+        ShowControls();
+        if (m_inactivityTimer)
+        {
+            m_inactivityTimer.Stop();
+            m_inactivityTimer.Start();
+        }
+    }
+
+    void MainWindow::ControlsBar_PointerEntered(IInspectable const&, Input::PointerRoutedEventArgs const&)
+    {
+        m_isPointerOverControls = true;
+        ShowControls();
+    }
+
+    void MainWindow::ControlsBar_PointerExited(IInspectable const&, Input::PointerRoutedEventArgs const&)
+    {
+        m_isPointerOverControls = false;
+        if (m_inactivityTimer)
+        {
+            m_inactivityTimer.Stop();
+            m_inactivityTimer.Start();
+        }
+    }
+
+    void MainWindow::Pip_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        try
+        {
+            auto appWindow = this->AppWindow();
+            if (m_isPip || appWindow.Presenter().Kind() == Microsoft::UI::Windowing::AppWindowPresenterKind::CompactOverlay)
+            {
+                appWindow.SetPresenter(Microsoft::UI::Windowing::AppWindowPresenterKind::Default);
+                m_isPip = false;
+                this->QueuePanel().Visibility(m_compactMode ? Visibility::Collapsed : Visibility::Visible);
+                this->QueueColumn().Width(GridLength{ m_compactMode ? 0.0 : 320.0, Microsoft::UI::Xaml::GridUnitType::Pixel });
+                this->VideoSurface().Margin(Thickness{ 0, 0, m_compactMode ? 0.0 : 16.0, 0 });
+                this->StatusText().Text(L"Exited Picture-in-Picture");
+                ToolTipService::SetToolTip(this->PipButton(), box_value(L"Picture-in-Picture (P)"));
+            }
+            else
+            {
+                appWindow.SetPresenter(Microsoft::UI::Windowing::AppWindowPresenterKind::CompactOverlay);
+                m_isPip = true;
+                this->QueuePanel().Visibility(Visibility::Collapsed);
+                this->QueueColumn().Width(GridLength{ 0.0, Microsoft::UI::Xaml::GridUnitType::Pixel });
+                this->VideoSurface().Margin(Thickness{ 0 });
+                this->StatusText().Text(L"Picture-in-Picture (Always on top)");
+                ToolTipService::SetToolTip(this->PipButton(), box_value(L"Exit Picture-in-Picture (P)"));
+            }
+        }
+        catch (hresult_error const& ex)
+        {
+            this->StatusText().Text(L"Could not toggle PiP: " + ex.message());
+        }
+    }
+
+    fire_and_forget MainWindow::Snapshot_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        auto lifetime = get_strong();
+        try
+        {
+            Microsoft::UI::Xaml::Media::Imaging::RenderTargetBitmap renderTarget;
+            co_await renderTarget.RenderAsync(this->VideoPlayer());
+            auto buffer = co_await renderTarget.GetPixelsAsync();
+            auto pixelWidth = renderTarget.PixelWidth();
+            auto pixelHeight = renderTarget.PixelHeight();
+
+            if (pixelWidth <= 0 || pixelHeight <= 0)
+            {
+                this->StatusText().Text(L"Cannot snapshot: player surface is empty");
+                co_return;
+            }
+
+            PWSTR picturesPath = nullptr;
+            std::wstring targetDirPath;
+            if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Pictures, 0, NULL, &picturesPath)))
+            {
+                targetDirPath = picturesPath;
+                CoTaskMemFree(picturesPath);
+            }
+            else
+            {
+                targetDirPath = ApplicationData::Current().LocalFolder().Path().c_str();
+            }
+
+            std::wstring snapshotsDir = targetDirPath + L"\\NovaSnapshots";
+            CreateDirectoryW(snapshotsDir.c_str(), NULL);
+
+            auto folder = co_await StorageFolder::GetFolderFromPathAsync(snapshotsDir);
+            auto now = std::chrono::system_clock::now();
+            auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+            auto fileName = L"Snapshot_" + std::to_wstring(timestamp) + L".png";
+
+            auto file = co_await folder.CreateFileAsync(fileName, CreationCollisionOption::GenerateUniqueName);
+            auto stream = co_await file.OpenAsync(FileAccessMode::ReadWrite);
+
+            auto encoder = co_await Windows::Graphics::Imaging::BitmapEncoder::CreateAsync(
+                Windows::Graphics::Imaging::BitmapEncoder::PngEncoderId(), stream);
+
+            byte* rawPixels = nullptr;
+            auto byteAccess = buffer.as<::Windows::Storage::Streams::IBufferByteAccess>();
+            if (SUCCEEDED(byteAccess->Buffer(&rawPixels)))
+            {
+                array_view<uint8_t const> pixelView(reinterpret_cast<uint8_t const*>(rawPixels),
+                    reinterpret_cast<uint8_t const*>(rawPixels) + buffer.Length());
+                encoder.SetPixelData(
+                    Windows::Graphics::Imaging::BitmapPixelFormat::Bgra8,
+                    Windows::Graphics::Imaging::BitmapAlphaMode::Premultiplied,
+                    static_cast<uint32_t>(pixelWidth),
+                    static_cast<uint32_t>(pixelHeight),
+                    96.0,
+                    96.0,
+                    pixelView);
+
+                co_await encoder.FlushAsync();
+                this->StatusText().Text(L"Snapshot saved to Pictures: " + file.Name());
+            }
+        }
+        catch (hresult_error const& ex)
+        {
+            this->StatusText().Text(L"Snapshot error: " + ex.message());
+        }
+    }
+
+    void MainWindow::AspectRatioPicker_SelectionChanged(IInspectable const&, SelectionChangedEventArgs const&)
+    {
+        if (m_updatingAspectRatio || !this->AspectRatioPicker() || !this->VideoPlayer())
+        {
+            return;
+        }
+
+        auto index = this->AspectRatioPicker().SelectedIndex();
+        switch (index)
+        {
+        case 0:
+            this->VideoPlayer().Stretch(Microsoft::UI::Xaml::Media::Stretch::Uniform);
+            this->StatusText().Text(L"Aspect ratio: Fit (Uniform)");
+            break;
+        case 1:
+            this->VideoPlayer().Stretch(Microsoft::UI::Xaml::Media::Stretch::Fill);
+            this->StatusText().Text(L"Aspect ratio: Fill (Stretch)");
+            break;
+        case 2:
+            this->VideoPlayer().Stretch(Microsoft::UI::Xaml::Media::Stretch::UniformToFill);
+            this->StatusText().Text(L"Aspect ratio: Zoom (Crop)");
+            break;
+        case 3:
+            this->VideoPlayer().Stretch(Microsoft::UI::Xaml::Media::Stretch::None);
+            this->StatusText().Text(L"Aspect ratio: Original (1:1)");
+            break;
+        default:
+            break;
+        }
+    }
+
+    void MainWindow::RefreshAudioTracks()
+    {
+        if (!this->AudioTrackPicker())
+        {
+            return;
+        }
+
+        if (!m_currentPlaybackItem)
+        {
+            if (this->AudioTrackPicker().Items().Size() != 1)
+            {
+                m_updatingAudioPicker = true;
+                this->AudioTrackPicker().Items().Clear();
+                this->AudioTrackPicker().Items().Append(box_value(L"No audio"));
+                this->AudioTrackPicker().SelectedIndex(0);
+                this->AudioTrackPicker().IsEnabled(false);
+                m_updatingAudioPicker = false;
+            }
+            return;
+        }
+
+        try
+        {
+            auto audioTracks = m_currentPlaybackItem.AudioTracks();
+            auto trackCount = audioTracks.Size();
+
+            if (trackCount <= 1)
+            {
+                if (this->AudioTrackPicker().Items().Size() != 1)
+                {
+                    m_updatingAudioPicker = true;
+                    this->AudioTrackPicker().Items().Clear();
+                    this->AudioTrackPicker().Items().Append(box_value(L"Default audio"));
+                    this->AudioTrackPicker().SelectedIndex(0);
+                    this->AudioTrackPicker().IsEnabled(false);
+                    m_updatingAudioPicker = false;
+                }
+                return;
+            }
+
+            if (this->AudioTrackPicker().Items().Size() == trackCount)
+            {
+                auto curSelected = audioTracks.SelectedIndex();
+                if (this->AudioTrackPicker().SelectedIndex() != curSelected)
+                {
+                    m_updatingAudioPicker = true;
+                    this->AudioTrackPicker().SelectedIndex(curSelected);
+                    m_updatingAudioPicker = false;
+                }
+                return;
+            }
+
+            m_updatingAudioPicker = true;
+            this->AudioTrackPicker().Items().Clear();
+            this->AudioTrackPicker().IsEnabled(true);
+
+            for (uint32_t i = 0; i < trackCount; ++i)
+            {
+                auto track = audioTracks.GetAt(i);
+                std::wstring name = track.Label().c_str();
+                if (name.empty())
+                {
+                    name = track.Language().c_str();
+                }
+                if (name.empty())
+                {
+                    name = L"Audio Track " + std::to_wstring(i + 1);
+                }
+                this->AudioTrackPicker().Items().Append(box_value(hstring(name)));
+            }
+
+            auto selected = audioTracks.SelectedIndex();
+            if (selected >= 0 && selected < static_cast<int32_t>(trackCount))
+            {
+                this->AudioTrackPicker().SelectedIndex(selected);
+            }
+            else
+            {
+                this->AudioTrackPicker().SelectedIndex(0);
+            }
+            m_updatingAudioPicker = false;
+        }
+        catch (...)
+        {
+        }
+    }
+
+    void MainWindow::AudioTrackPicker_SelectionChanged(IInspectable const&, SelectionChangedEventArgs const&)
+    {
+        if (m_updatingAudioPicker || !m_currentPlaybackItem)
+        {
+            return;
+        }
+
+        try
+        {
+            auto selected = this->AudioTrackPicker().SelectedIndex();
+            auto audioTracks = m_currentPlaybackItem.AudioTracks();
+            if (selected >= 0 && selected < static_cast<int32_t>(audioTracks.Size()))
+            {
+                audioTracks.SelectedIndex(selected);
+                auto track = audioTracks.GetAt(selected);
+                auto label = track.Label();
+                if (label.empty())
+                {
+                    label = track.Language();
+                }
+                if (label.empty())
+                {
+                    label = L"Track " + to_hstring(selected + 1);
+                }
+                this->StatusText().Text(L"Audio track: " + label);
+            }
+        }
+        catch (...)
+        {
+        }
+    }
+
+    void MainWindow::AdjustSubtitleDelay(int32_t deltaMs)
+    {
+        m_subtitleDelayMs += deltaMs;
+        std::wstring signStr = m_subtitleDelayMs > 0 ? L"+" : L"";
+        if (this->SubDelayText())
+        {
+            this->SubDelayText().Text(hstring(signStr + std::to_wstring(m_subtitleDelayMs) + L" ms"));
+        }
+        this->StatusText().Text(hstring(L"Subtitle sync offset: " + signStr + std::to_wstring(m_subtitleDelayMs) + L" ms"));
+
+        if (!m_currentPlaybackItem)
+        {
+            return;
+        }
+
+        try
+        {
+            auto tracks = m_currentPlaybackItem.TimedMetadataTracks();
+            int64_t deltaTicks = static_cast<int64_t>(deltaMs) * 10'000LL;
+
+            for (uint32_t i = 0; i < tracks.Size(); ++i)
+            {
+                auto track = tracks.GetAt(i);
+                auto cues = track.Cues();
+                for (uint32_t c = 0; c < cues.Size(); ++c)
+                {
+                    auto cue = cues.GetAt(c);
+                    auto curStart = cue.StartTime().count();
+                    auto newStart = std::max<int64_t>(0LL, curStart + deltaTicks);
+                    cue.StartTime(Windows::Foundation::TimeSpan{ newStart });
+                }
+            }
+        }
+        catch (...)
+        {
+        }
+    }
+
+    void MainWindow::SubDelayMinus_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        AdjustSubtitleDelay(-50);
+    }
+
+    void MainWindow::SubDelayPlus_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        AdjustSubtitleDelay(50);
+    }
+
+    void MainWindow::SubDelayReset_Click(IInspectable const&, RoutedEventArgs const&)
+    {
+        AdjustSubtitleDelay(-m_subtitleDelayMs);
+    }
+
+    static std::wstring GetHistoryFilePath()
+    {
+        try
+        {
+            auto localFolder = winrt::Windows::Storage::ApplicationData::Current().LocalFolder();
+            return std::wstring(localFolder.Path().c_str()) + L"\\playback_history.txt";
+        }
+        catch (...)
+        {
+            PWSTR localAppData = nullptr;
+            if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &localAppData)))
+            {
+                std::wstring dir = std::wstring(localAppData) + L"\\NovaVideoPlayer";
+                CreateDirectoryW(dir.c_str(), NULL);
+                CoTaskMemFree(localAppData);
+                return dir + L"\\playback_history.txt";
+            }
+            return L"";
+        }
+    }
+
+    void MainWindow::LoadPlaybackHistory()
+    {
+        auto path = GetHistoryFilePath();
+        if (path.empty()) return;
+
+        std::wifstream infile(path);
+        if (!infile.is_open()) return;
+
+        std::wstring line;
+        m_recentFiles.clear();
+        m_resumePositions.clear();
+
+        while (std::getline(infile, line))
+        {
+            if (line.empty()) continue;
+            auto sep = line.find(L'|');
+            if (sep != std::wstring::npos)
+            {
+                auto filePath = line.substr(0, sep);
+                auto posStr = line.substr(sep + 1);
+                try
+                {
+                    double pos = std::stod(posStr);
+                    m_resumePositions[filePath] = pos;
+                    if (std::find(m_recentFiles.begin(), m_recentFiles.end(), filePath) == m_recentFiles.end())
+                    {
+                        m_recentFiles.push_back(filePath);
+                    }
+                }
+                catch (...) {}
+            }
+            else
+            {
+                if (std::find(m_recentFiles.begin(), m_recentFiles.end(), line) == m_recentFiles.end())
+                {
+                    m_recentFiles.push_back(line);
+                }
+            }
+        }
+        UpdateRecentMenu();
+    }
+
+    void MainWindow::SavePlaybackHistory()
+    {
+        auto path = GetHistoryFilePath();
+        if (path.empty()) return;
+
+        std::wofstream outfile(path);
+        if (!outfile.is_open()) return;
+
+        for (auto const& file : m_recentFiles)
+        {
+            double pos = 0.0;
+            auto it = m_resumePositions.find(file);
+            if (it != m_resumePositions.end())
+            {
+                pos = it->second;
+            }
+            outfile << file << L"|" << pos << L"\n";
+        }
+    }
+
+    void MainWindow::UpdateRecentMenu()
+    {
+        auto flyout = this->RecentMenuFlyout();
+        if (!flyout) return;
+
+        flyout.Items().Clear();
+
+        if (m_recentFiles.empty())
+        {
+            auto emptyItem = MenuFlyoutItem();
+            emptyItem.Text(L"No recent videos");
+            emptyItem.IsEnabled(false);
+            flyout.Items().Append(emptyItem);
+            return;
+        }
+
+        for (size_t i = 0; i < std::min<size_t>(m_recentFiles.size(), 10); ++i)
+        {
+            auto filePath = m_recentFiles[i];
+            auto nameStart = filePath.find_last_of(L"\\/");
+            auto fileName = nameStart == std::wstring::npos ? filePath : filePath.substr(nameStart + 1);
+
+            auto item = MenuFlyoutItem();
+            auto resumePos = m_resumePositions[filePath];
+            if (resumePos > 5.0)
+            {
+                item.Text(hstring(fileName + L"  (" + FormatTime(resumePos).c_str() + L")"));
+            }
+            else
+            {
+                item.Text(hstring(fileName));
+            }
+
+            item.Click([this, filePath](IInspectable const&, RoutedEventArgs const&)
+            {
+                QueueMediaFiles({ filePath });
+            });
+            flyout.Items().Append(item);
+        }
+
+        flyout.Items().Append(MenuFlyoutSeparator());
+
+        auto clearItem = MenuFlyoutItem();
+        clearItem.Text(L"Clear history");
+        clearItem.Click([this](IInspectable const&, RoutedEventArgs const&)
+        {
+            m_recentFiles.clear();
+            m_resumePositions.clear();
+            SavePlaybackHistory();
+            UpdateRecentMenu();
+            this->StatusText().Text(L"Recent playback history cleared");
+        });
+        flyout.Items().Append(clearItem);
     }
 }

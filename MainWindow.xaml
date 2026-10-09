@@ -12,6 +12,7 @@
     <Grid x:Name="RootGrid" RequestedTheme="Dark" Background="#0B0D13" Padding="16" AllowDrop="True"
           DragOver="RootGrid_DragOver" DragEnter="RootGrid_DragEnter"
           DragLeave="RootGrid_DragLeave" Drop="RootGrid_Drop"
+          PointerMoved="RootGrid_PointerMoved"
           KeyDown="RootGrid_KeyDown" IsTabStop="True">
         <Grid.Resources>
             <!-- Brand accent theme for sliders and highlights -->
@@ -380,9 +381,16 @@
                 </Border>
 
                 <!-- Floating Playback Controls Bar -->
-                <Border VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
+                <Border x:Name="ControlsBar" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
                         Margin="16" Padding="16,12" CornerRadius="16" BorderThickness="1"
-                        BorderBrush="#2E354B" IsTabStop="False">
+                        BorderBrush="#2E354B" IsTabStop="False"
+                        PointerEntered="ControlsBar_PointerEntered"
+                        PointerExited="ControlsBar_PointerExited">
+                    <Border.Transitions>
+                        <TransitionCollection>
+                            <ContentThemeTransition />
+                        </TransitionCollection>
+                    </Border.Transitions>
                     <Border.Background>
                         <AcrylicBrush TintColor="#121520" TintOpacity="0.88"
                                       FallbackColor="#121520" />
@@ -432,7 +440,7 @@
                                 <TextBlock x:Name="StatusText" Text="Ready when you are"
                                            FontSize="11" Foreground="#94A3B8"
                                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
-                                           ToolTipService.ToolTip="Space: play/pause · arrows: seek/volume · M: mute · F: fullscreen" />
+                                           ToolTipService.ToolTip="Space: play/pause · arrows: seek/volume · M: mute · F: fullscreen · P: PiP · S: snapshot · A: aspect" />
                             </StackPanel>
 
                             <!-- Center: Transport Buttons -->
@@ -508,7 +516,7 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- Toggle queue, options, and full screen -->
+                                <!-- Toggle queue, snapshot, PiP, options, and full screen -->
                                 <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                                     <AppBarToggleButton x:Name="CompactModeButton" Click="CompactMode_Click"
                                                         IsChecked="False"
@@ -519,6 +527,22 @@
                                             <SymbolIcon Symbol="ViewAll" />
                                         </AppBarToggleButton.Icon>
                                     </AppBarToggleButton>
+                                    <AppBarButton x:Name="SnapshotButton" Click="Snapshot_Click"
+                                                  Style="{StaticResource MediaTransportButtonStyle}"
+                                                  ToolTipService.ToolTip="Take frame snapshot (S)"
+                                                  AutomationProperties.Name="Take snapshot">
+                                        <AppBarButton.Icon>
+                                            <SymbolIcon Symbol="Camera" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
+                                    <AppBarButton x:Name="PipButton" Click="Pip_Click"
+                                                  Style="{StaticResource MediaTransportButtonStyle}"
+                                                  ToolTipService.ToolTip="Picture-in-Picture / Mini player (P)"
+                                                  AutomationProperties.Name="Picture-in-Picture">
+                                        <AppBarButton.Icon>
+                                            <FontIcon Glyph="&#xE727;" />
+                                        </AppBarButton.Icon>
+                                    </AppBarButton>
                                     <AppBarButton x:Name="MoreActionsButton"
                                                   Style="{StaticResource MediaTransportButtonStyle}"
                                                   ToolTipService.ToolTip="Playback settings and options"
@@ -528,14 +552,16 @@
                                         </AppBarButton.Icon>
                                         <AppBarButton.Flyout>
                                             <Flyout Placement="Top">
-                                                <StackPanel MinWidth="280" Spacing="14" Padding="12">
+                                                <StackPanel MinWidth="290" Spacing="14" Padding="14">
                                                     <TextBlock Text="Playback options" FontSize="15"
                                                                FontWeight="SemiBold" Foreground="#F8FAFC" />
+                                                    
+                                                    <!-- Speed -->
                                                     <StackPanel Orientation="Horizontal" Spacing="12"
                                                                 VerticalAlignment="Center">
-                                                        <TextBlock Text="Speed" Width="72"
+                                                        <TextBlock Text="Speed" Width="80"
                                                                    VerticalAlignment="Center" Foreground="#94A3B8" />
-                                                        <ComboBox x:Name="SpeedPicker" Width="150" SelectedIndex="2"
+                                                        <ComboBox x:Name="SpeedPicker" Width="160" SelectedIndex="2"
                                                                   ToolTipService.ToolTip="Playback speed"
                                                                   AutomationProperties.Name="Playback speed"
                                                                   SelectionChanged="SpeedPicker_SelectionChanged">
@@ -547,6 +573,77 @@
                                                             <ComboBoxItem Content="2×" />
                                                         </ComboBox>
                                                     </StackPanel>
+
+                                                    <!-- Aspect Ratio -->
+                                                    <StackPanel Orientation="Horizontal" Spacing="12"
+                                                                VerticalAlignment="Center">
+                                                        <TextBlock Text="Aspect ratio" Width="80"
+                                                                   VerticalAlignment="Center" Foreground="#94A3B8" />
+                                                        <ComboBox x:Name="AspectRatioPicker" Width="160" SelectedIndex="0"
+                                                                  ToolTipService.ToolTip="Aspect ratio (A)"
+                                                                  AutomationProperties.Name="Aspect ratio"
+                                                                  SelectionChanged="AspectRatioPicker_SelectionChanged">
+                                                            <ComboBoxItem Content="Fit (Uniform)" />
+                                                            <ComboBoxItem Content="Fill (Stretch)" />
+                                                            <ComboBoxItem Content="Zoom (Crop)" />
+                                                            <ComboBoxItem Content="Original (1:1)" />
+                                                        </ComboBox>
+                                                    </StackPanel>
+
+                                                    <!-- Multi Audio Track -->
+                                                    <StackPanel Orientation="Horizontal" Spacing="12"
+                                                                VerticalAlignment="Center">
+                                                        <TextBlock Text="Audio track" Width="80"
+                                                                   VerticalAlignment="Center" Foreground="#94A3B8" />
+                                                        <ComboBox x:Name="AudioTrackPicker" Width="160" SelectedIndex="0"
+                                                                  ToolTipService.ToolTip="Audio track stream"
+                                                                  AutomationProperties.Name="Audio track"
+                                                                  SelectionChanged="AudioTrackPicker_SelectionChanged">
+                                                            <ComboBoxItem Content="Default audio" />
+                                                        </ComboBox>
+                                                    </StackPanel>
+
+                                                    <!-- Subtitle selection -->
+                                                    <TextBlock Text="Subtitles" FontSize="12" FontWeight="SemiBold"
+                                                               Foreground="#94A3B8" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                        <ComboBox x:Name="SubtitlePicker" Width="185" SelectedIndex="0"
+                                                                  ToolTipService.ToolTip="Subtitle track"
+                                                                  AutomationProperties.Name="Subtitle track"
+                                                                  SelectionChanged="SubtitlePicker_SelectionChanged">
+                                                            <ComboBoxItem Content="Subtitles off" />
+                                                        </ComboBox>
+                                                        <AppBarButton x:Name="OpenSubtitleButton" Click="OpenSubtitle_Click"
+                                                                      Style="{StaticResource MediaTransportButtonStyle}"
+                                                                      ToolTipService.ToolTip="Load an external subtitle file"
+                                                                      AutomationProperties.Name="Load subtitles">
+                                                            <AppBarButton.Icon>
+                                                                <SymbolIcon Symbol="Caption" />
+                                                            </AppBarButton.Icon>
+                                                        </AppBarButton>
+                                                    </StackPanel>
+
+                                                    <!-- Subtitle Sync Delay -->
+                                                    <StackPanel Spacing="6">
+                                                        <Grid>
+                                                            <TextBlock Text="Subtitle sync delay" FontSize="12" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" />
+                                                            <TextBlock x:Name="SubDelayText" Text="0 ms" FontSize="12" FontWeight="SemiBold"
+                                                                       Foreground="#A78BFA" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                        </Grid>
+                                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                                            <Button x:Name="SubDelayMinusBtn" Click="SubDelayMinus_Click" Content="-50 ms"
+                                                                    Style="{StaticResource QueueActionButtonStyle}" Width="68"
+                                                                    ToolTipService.ToolTip="Delay subtitles by -50ms (Z)" />
+                                                            <Button x:Name="SubDelayPlusBtn" Click="SubDelayPlus_Click" Content="+50 ms"
+                                                                    Style="{StaticResource QueueActionButtonStyle}" Width="68"
+                                                                    ToolTipService.ToolTip="Advance subtitles by +50ms (X)" />
+                                                            <Button x:Name="SubDelayResetBtn" Click="SubDelayReset_Click" Content="Reset"
+                                                                    Style="{StaticResource QueueActionButtonStyle}" Width="60"
+                                                                    ToolTipService.ToolTip="Reset subtitle delay to 0ms (C)" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <!-- Controls: Shuffle, Repeat, Stop -->
                                                     <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                                         <AppBarToggleButton x:Name="ShuffleButton" Click="Shuffle_Click"
                                                                             Style="{StaticResource MediaToggleButtonStyle}"
@@ -573,24 +670,8 @@
                                                             </AppBarButton.Icon>
                                                         </AppBarButton>
                                                     </StackPanel>
-                                                    <TextBlock Text="Subtitles" FontSize="12" FontWeight="SemiBold"
-                                                               Foreground="#94A3B8" />
-                                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                        <ComboBox x:Name="SubtitlePicker" Width="180" SelectedIndex="0"
-                                                                  ToolTipService.ToolTip="Subtitle track"
-                                                                  AutomationProperties.Name="Subtitle track"
-                                                                  SelectionChanged="SubtitlePicker_SelectionChanged">
-                                                            <ComboBoxItem Content="Subtitles off" />
-                                                        </ComboBox>
-                                                        <AppBarButton x:Name="OpenSubtitleButton" Click="OpenSubtitle_Click"
-                                                                      Style="{StaticResource MediaTransportButtonStyle}"
-                                                                      ToolTipService.ToolTip="Load an external subtitle file"
-                                                                      AutomationProperties.Name="Load subtitles">
-                                                            <AppBarButton.Icon>
-                                                                <SymbolIcon Symbol="Caption" />
-                                                            </AppBarButton.Icon>
-                                                        </AppBarButton>
-                                                    </StackPanel>
+
+                                                    <!-- Stereo balance -->
                                                     <StackPanel Spacing="4">
                                                         <TextBlock Text="Stereo balance" FontSize="12"
                                                                    FontWeight="SemiBold" Foreground="#94A3B8" />
@@ -658,6 +739,17 @@
                                    FontSize="12" Foreground="#94A3B8" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <Button x:Name="RecentFilesButton"
+                                Style="{StaticResource QueueActionButtonStyle}"
+                                ToolTipService.ToolTip="Recent videos &amp; resume"
+                                AutomationProperties.Name="Recent videos">
+                            <Button.Flyout>
+                                <MenuFlyout x:Name="RecentMenuFlyout">
+                                    <MenuFlyoutItem Text="No recent videos" IsEnabled="False" />
+                                </MenuFlyout>
+                            </Button.Flyout>
+                            <SymbolIcon Symbol="Clock" />
+                        </Button>
                         <Button x:Name="OpenVideoButton" Click="OpenVideo_Click"
                                 Style="{StaticResource QueueActionButtonStyle}"
                                 ToolTipService.ToolTip="Choose video or audio files"
